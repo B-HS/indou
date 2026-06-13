@@ -6,7 +6,9 @@ on:
     paths-ignore:
       - 'docs/**'
       - '*.md'
+      - 'web/**'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
     inputs:
       version_bump:
