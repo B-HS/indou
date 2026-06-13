@@ -20,9 +20,9 @@ concurrency:
 jobs:
   test:
     name: Build & Test
-    # Indou targets macOS 26 (Swift 6.2 / Xcode 26), so it needs a macОС 26
+    # Indou targets macOS 26 (Swift 6.2 / Xcode 26), so it needs a macOS 26
     # runner. Swap to a self-hosted Mac if the hosted macos-26 image is
-    # unavailable in your region.
+    # unavailable.
     runs-on: macos-26
     timeout-minutes: 25
     steps:
