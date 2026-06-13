@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Indou — a fast, modern macOS window switcher</title>
+<meta name="description" content="Indou is a fast, modern macOS window switcher. Hold ⌥, press Tab, release. A free, open-source AltTab alternative for macOS 26." />
+<meta name="theme-color" content="#0A0A12" />
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+<link rel="apple-touch-icon" href="assets/icon-512.png" />
+
+<meta property="og:title" content="Indou — macOS window switcher" />
+<meta property="og:description" content="Hold ⌥, press Tab, release. A fast, modern, free window switcher for macOS 26." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="assets/icon-512.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="#top">
+    <img src="assets/icon.svg" alt="" width="28" height="28" />
+    <span>Indou</span>
+  </a>
+  <nav class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#keys">Shortcuts</a>
+    <a href="https://github.com/B-HS/indou" target="_blank" rel="noopener">GitHub</a>
+    <a class="btn btn-sm" href="https://github.com/B-HS/indou/releases/latest" target="_blank" rel="noopener">Download</a>
+  </nav>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <p class="eyebrow reveal">macOS&nbsp;26 · Free &amp; open source</p>
+    <h1 class="reveal d1">
+      Switch windows<span class="dot">.</span><br />
+      <span class="accent">at the speed of thought.</span>
+    </h1>
+    <p class="lede reveal d2">
+      A fast, modern window switcher for macOS. Hold a key, glance at every window across every
+      Space, release to jump. The capable, free alternative to AltTab.
+    </p>
+    <div class="cta reveal d3">
+      <a class="btn btn-lg" href="https://github.com/B-HS/indou/releases/latest" target="_blank" rel="noopener">
+        Download for macOS
+        <span class="btn-meta">Apple Silicon · Intel</span>
+      </a>
+      <a class="btn btn-ghost btn-lg" href="https://github.com/B-HS/indou" target="_blank" rel="noopener">View source</a>
+    </div>
+    <p class="trigger-hint reveal d3">
+      Press <kbd>⌥</kbd> <kbd>⇥</kbd> to cycle · release to focus
+    </p>
+
+    <!-- Signature: the switcher overlay, with the selection auto-cycling like ⌥Tab -->
+    <div class="switcher reveal d4" aria-hidden="true">
+      <div class="switcher-grid">
+        <div class="cell" style="--i:0"><span class="ti" data-c="#34d399"></span><span class="bar"></span><span class="lbl">Finder</span></div>
+        <div class="cell" style="--i:1"><span class="ti" data-c="#60a5fa"></span><span class="bar"></span><span class="lbl">Safari</span></div>
+        <div class="cell" style="--i:2"><span class="ti" data-c="#f472b6"></span><span class="bar"></span><span class="lbl">Figma</span></div>
+        <div class="cell" style="--i:3"><span class="ti" data-c="#a78bfa"></span><span class="bar"></span><span class="lbl">Code</span></div>
+        <div class="cell" style="--i:4"><span class="ti" data-c="#fbbf24"></span><span class="bar"></span><span class="lbl">Terminal</span></div>
+        <div class="cell" style="--i:5"><span class="ti" data-c="#22d3ee"></span><span class="bar"></span><span class="lbl">Music</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="features">
+    <h2 class="section-title">Everything AltTab did<span class="accent">, and more.</span></h2>
+    <div class="grid">
+      <article class="card">
+        <div class="ic">⌨</div>
+        <h3>Custom shortcuts</h3>
+        <p>Record any modifier + key. Run multiple trigger profiles — all windows, current app, and more.</p>
+      </article>
+      <article class="card">
+        <div class="ic">▦</div>
+        <h3>Every real window</h3>
+        <p>ScreenCaptureKit + Accessibility, across Spaces and displays, including minimized and fullscreen. Background-only apps stay out.</p>
+      </article>
+      <article class="card">
+        <div class="ic">⇄</div>
+        <h3>Grid navigation</h3>
+        <p>Tab to cycle, arrow or vim keys to roam the 2D grid, release to focus. Auto-scrolls to your selection.</p>
+      </article>
+      <article class="card">
+        <div class="ic">✕</div>
+        <h3>Act on windows</h3>
+        <p>Close, minimize, fullscreen, or quit right from the switcher. Drag-select or ⌘-click to act on many at once.</p>
+      </article>
+      <article class="card">
+        <div class="ic">⌕</div>
+        <h3>Instant search</h3>
+        <p>Six-tier fuzzy matching, plus Korean initial-consonant search. Type a few letters, land on the window.</p>
+      </article>
+      <article class="card">
+        <div class="ic">✦</div>
+        <h3>Smooth &amp; quiet</h3>
+        <p>120&nbsp;Hz transitions you can toggle off, a non-activating overlay that never steals focus, and full localization.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="keys" class="keys">
+    <h2 class="section-title">Built for your hands.</h2>
+    <p class="keys-sub">Hold the trigger, the switcher appears. Everything happens on the keyboard.</p>
+    <div class="key-rows">
+      <div class="key-row"><span class="keys-grp"><kbd>⌥</kbd><kbd>⇥</kbd></span><span class="key-desc">Open &amp; cycle forward — release to focus</span></div>
+      <div class="key-row"><span class="keys-grp"><kbd>⌥</kbd><kbd>⇧</kbd><kbd>⇥</kbd></span><span class="key-desc">Cycle backward</span></div>
+      <div class="key-row"><span class="keys-grp"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span><span class="key-desc">Move freely across the grid</span></div>
+      <div class="key-row"><span class="keys-grp"><kbd>W</kbd><kbd>M</kbd><kbd>F</kbd><kbd>Q</kbd></span><span class="key-desc">Close · minimize · fullscreen · quit app</span></div>
+      <div class="key-row"><span class="keys-grp"><kbd>Space</kbd></span><span class="key-desc">Lock open for mouse selection</span></div>
+    </div>
+  </section>
+
+  <section class="download">
+    <div class="dl-card">
+      <img src="assets/icon.svg" alt="Indou" width="76" height="76" />
+      <h2>Get Indou</h2>
+      <p>Free and open source under MIT. Requires macOS&nbsp;26 (Tahoe). Notarized &amp; signed — opens with no warning.</p>
+      <a class="btn btn-lg" href="https://github.com/B-HS/indou/releases/latest" target="_blank" rel="noopener">Download the latest release</a>
+      <p class="perm-note">Grants needed on first launch: Accessibility (required) · Screen Recording (optional, for thumbnails).</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>Indou · MIT License</span>
+  <a href="https://github.com/B-HS/indou" target="_blank" rel="noopener">github.com/B-HS/indou</a>
+</footer>
+</body>
+</html>
