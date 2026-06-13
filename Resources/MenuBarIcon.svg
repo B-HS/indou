@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+  <!-- back window: outline, peeking top-right -->
+  <rect x="15" y="6.5" width="15" height="12.5" rx="3" fill="none" stroke="black" stroke-width="2.4"/>
+  <!-- front window: solid, occludes the overlap -->
+  <rect x="6" y="15" width="16.5" height="14" rx="3.2" fill="black"/>
+</svg>

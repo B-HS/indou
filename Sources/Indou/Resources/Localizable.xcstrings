@@ -1,0 +1,138 @@
+{
+  "sourceLanguage" : "en",
+  "version" : "1.0",
+  "strings" : {
+    "Settings…" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "설정…" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "設定…" } }
+      }
+    },
+    "Quit Indou" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Indou 종료" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Indou を終了" } }
+      }
+    },
+    "General" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "일반" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "一般" } }
+      }
+    },
+    "Shortcuts" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "단축키" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ショートカット" } }
+      }
+    },
+    "Appearance" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "외형" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "外観" } }
+      }
+    },
+    "Animations" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "애니메이션" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "アニメーション" } }
+      }
+    },
+    "Input" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "입력" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "入力" } }
+      }
+    },
+    "Filters" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "필터" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "フィルタ" } }
+      }
+    },
+    "Advanced" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "고급" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "詳細" } }
+      }
+    },
+    "About" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "정보" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "情報" } }
+      }
+    },
+    "App-wide preferences" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "앱 전역 설정" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "アプリ全体の設定" } }
+      }
+    },
+    "Open at Login" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "로그인 시 시작" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ログイン時に開く" } }
+      }
+    },
+    "Show menu bar icon" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "메뉴 막대 아이콘 표시" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "メニューバーアイコンを表示" } }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "언어" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "言語" } }
+      }
+    },
+    "System" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "시스템" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "システム" } }
+      }
+    },
+    "Switcher display" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "스위처 디스플레이" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "スイッチャーの表示先" } }
+      }
+    },
+    "Trigger profiles" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "트리거 프로필" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "トリガープロファイル" } }
+      }
+    },
+    "Switcher look & feel" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "스위처 모양과 동작" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "スイッチャーの見た目" } }
+      }
+    },
+    "Transitions & motion" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전환과 모션" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "トランジションとモーション" } }
+      }
+    },
+    "Enable transition animations" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전환 애니메이션 사용" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "トランジションアニメーションを有効化" } }
+      }
+    },
+    "Hidden apps (blacklist)" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "숨길 앱 (블랙리스트)" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "非表示アプリ（ブラックリスト）" } }
+      }
+    },
+    "Private APIs, performance, permissions" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "사설 API · 성능 · 권한" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "プライベートAPI・パフォーマンス・権限" } }
+      }
+    }
+  }
+}

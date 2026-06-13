@@ -1,0 +1,48 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Swift / SwiftPM
+/.build
+.build/
+/build
+DerivedData/
+.swiftpm/
+Package.pins
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.modulecache
+
+# Build artifacts
+*.app
+*.dSYM
+*.dSYM.zip
+
+# Secrets / code signing / notarization — never commit
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.crt
+*.der
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+AuthKey_*.p8
+*.keychain
+*.keychain-db
+.env
+.env.*
+*.secrets
+secrets.*
+notarization*.json
+.notarytool*
+
+# Logs / local runtime
+*.log
+indou-focus.log
