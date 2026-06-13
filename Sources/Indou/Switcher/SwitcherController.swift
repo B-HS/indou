@@ -124,6 +124,8 @@ final class SwitcherController {
         model.onMarquee = { [weak self] ids in self?.model.multiSelected = ids }
         model.onContext = { [weak self] action, targets in self?.performContext(action, targets: targets) }
         model.onCloseWindow = { [weak self] id in self?.closeWindow(id) }
+        model.onMinimizeWindow = { [weak self] id in self?.windowAction(id) { WindowActions.setMinimized($0, true) } }
+        model.onFullscreenWindow = { [weak self] id in self?.windowAction(id) { WindowActions.toggleFullscreen($0) } }
     }
 
     // MARK: - Keyboard
@@ -332,6 +334,12 @@ final class SwitcherController {
     private func closeWindow(_ id: WindowID) {
         guard let live = liveByID[id] else { return }
         WindowActions.close(live)
+        refreshAfterAction()
+    }
+
+    private func windowAction(_ id: WindowID, _ body: (LiveWindow) -> Void) {
+        guard let live = liveByID[id] else { return }
+        body(live)
         refreshAfterAction()
     }
 

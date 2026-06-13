@@ -34,6 +34,8 @@ final class SwitcherViewModel {
     @ObservationIgnored var onMarquee: ((Set<WindowID>) -> Void)?
     @ObservationIgnored var onContext: ((ContextAction, [WindowID]) -> Void)?
     @ObservationIgnored var onCloseWindow: ((WindowID) -> Void)?
+    @ObservationIgnored var onMinimizeWindow: ((WindowID) -> Void)?
+    @ObservationIgnored var onFullscreenWindow: ((WindowID) -> Void)?
 
     init(thumbnails: ThumbnailStore) {
         self.thumbnails = thumbnails

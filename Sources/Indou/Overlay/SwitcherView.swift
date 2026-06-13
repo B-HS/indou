@@ -65,7 +65,9 @@ struct SwitcherView: View {
             appearance: model.appearance,
             cellSize: model.cellSize,
             animated: model.animationEnabled,
-            onClose: { model.onCloseWindow?(window.id) }
+            onClose: { model.onCloseWindow?(window.id) },
+            onMinimize: { model.onMinimizeWindow?(window.id) },
+            onFullscreen: { model.onFullscreenWindow?(window.id) }
         )
         .background(GeometryReader { geo in
             Color.clear.preference(key: CellFrameKey.self, value: [window.id: geo.frame(in: .named("grid"))])
@@ -131,6 +133,8 @@ private struct SwitcherCell: View {
     let cellSize: CGSize
     let animated: Bool
     let onClose: () -> Void
+    let onMinimize: () -> Void
+    let onFullscreen: () -> Void
 
     @State private var hovering = false
 
@@ -149,7 +153,7 @@ private struct SwitcherCell: View {
             RoundedRectangle(cornerRadius: DS.Radius.cell)
                 .strokeBorder(borderColor, lineWidth: isSelected || isMultiSelected ? 2 : 0)
         )
-        .overlay(alignment: .topLeading) { closeButton }
+        .overlay(alignment: .topLeading) { hoverControls }
         .scaleEffect(isSelected && animated ? 1.03 : 1.0)
         .animation(animated ? .spring(response: 0.25, dampingFraction: 0.7) : nil, value: isSelected)
         .onHover { hovering = $0 }
@@ -161,20 +165,37 @@ private struct SwitcherCell: View {
         return .clear
     }
 
+    // macOS traffic-light style controls, shown on hover and selectively by state:
+    // minimized windows offer only close; others offer close + minimize + fullscreen.
     @ViewBuilder
-    private var closeButton: some View {
+    private var hoverControls: some View {
         if hovering {
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 16, height: 16)
-                    .background(Color.red, in: Circle())
+            HStack(spacing: 5) {
+                controlButton("xmark", .red, onClose, help: "Close window")
+                if !window.isMinimized {
+                    controlButton("minus", .yellow, onMinimize, help: "Minimize window")
+                    controlButton(
+                        window.isFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
+                        .green,
+                        onFullscreen,
+                        help: window.isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                    )
+                }
             }
-            .buttonStyle(.plain)
             .padding(6)
-            .help("Close window")
         }
+    }
+
+    private func controlButton(_ symbol: String, _ color: Color, _ action: @escaping () -> Void, help: String) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 16, height: 16)
+                .background(color, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 
     @ViewBuilder
@@ -189,32 +210,8 @@ private struct SwitcherCell: View {
             } else if let icon {
                 Image(nsImage: icon).resizable().aspectRatio(contentMode: .fit).frame(width: 56, height: 56)
             }
-            statusBadges
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    @ViewBuilder
-    private var statusBadges: some View {
-        if appearance.showStatusIcons {
-            VStack {
-                HStack {
-                    Spacer()
-                    if window.isMinimized { badge("minus.circle.fill", .yellow) }
-                    if window.isFullscreen { badge("arrow.up.left.and.arrow.down.right", .blue) }
-                }
-                Spacer()
-            }
-            .padding(6)
-        }
-    }
-
-    private func badge(_ symbol: String, _ color: Color) -> some View {
-        Image(systemName: symbol)
-            .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(color)
-            .padding(3)
-            .background(.black.opacity(0.4), in: Circle())
     }
 
     private var titleRow: some View {
