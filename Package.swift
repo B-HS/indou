@@ -31,9 +31,12 @@ let package = Package(
             name: "Indou",
             dependencies: ["IndouKit", "PrivateWindowServer"],
             path: "Sources/Indou",
-            resources: [
-                .process("Resources"),
-            ],
+            // Resources are placed into the .app by scripts/build-app.sh and loaded
+            // via Bundle.main — not SwiftPM's Bundle.module (whose executable-target
+            // accessor only looks next to the binary / build dir, which fails in a
+            // distributed .app). Excluded here so SwiftPM doesn't generate that
+            // fragile accessor.
+            exclude: ["Resources"],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
             ]

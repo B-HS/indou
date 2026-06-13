@@ -53,21 +53,20 @@ if [ -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
     cp "$ROOT_DIR/Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 fi
 
-# Compile the String Catalog (.xcstrings) into <lang>.lproj/*.strings inside the
-# app bundle so Bundle.main resolves localizations. `swift build` copies the raw
-# .xcstrings into the module bundle but does NOT compile it, so we do it here.
-XCSTRINGS="$ROOT_DIR/Sources/Indou/Resources/Localizable.xcstrings"
-if [ -f "$XCSTRINGS" ] && xcrun --find xcstringstool >/dev/null 2>&1; then
+# Resources are managed here (not by SwiftPM) and loaded via Bundle.main.
+RES_SRC="$ROOT_DIR/Sources/Indou/Resources"
+
+# Compile the String Catalog (.xcstrings) into <lang>.lproj/*.strings so
+# Bundle.main resolves localizations.
+if [ -f "$RES_SRC/Localizable.xcstrings" ] && xcrun --find xcstringstool >/dev/null 2>&1; then
     echo "==> Compiling String Catalog"
-    xcrun xcstringstool compile --output-directory "$APP_DIR/Contents/Resources" "$XCSTRINGS"
+    xcrun xcstringstool compile --output-directory "$APP_DIR/Contents/Resources" "$RES_SRC/Localizable.xcstrings"
 fi
 
-# Bundle any other .bundle resources SwiftPM emits (without the raw .xcstrings).
-for b in "$BIN_PATH"/*.bundle; do
-    [ -e "$b" ] || continue
-    cp -R "$b" "$APP_DIR/Contents/Resources/"
-    rm -f "$APP_DIR/Contents/Resources/$(basename "$b")/Localizable.xcstrings"
-done
+# Copy loose resources (menu bar template image) into Resources.
+if [ -f "$RES_SRC/MenuBarIcon.png" ]; then
+    cp "$RES_SRC/MenuBarIcon.png" "$APP_DIR/Contents/Resources/MenuBarIcon.png"
+fi
 
 echo "==> Codesign (identity: $IDENTITY)"
 SIGN_ARGS=(--force --deep --options runtime --timestamp --sign "$IDENTITY")
