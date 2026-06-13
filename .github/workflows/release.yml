@@ -141,18 +141,27 @@ jobs:
             echo "Notarization skipped (missing Developer ID cert or Apple credentials)."
             exit 0
           fi
+          KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
           xcrun notarytool store-credentials "indou-ci" \
-              --keychain "$RUNNER_TEMP/app-signing.keychain-db" \
+              --keychain "$KEYCHAIN" \
               --apple-id "$APPLE_ID" \
               --team-id "$APPLE_TEAM_ID" \
               --password "$APPLE_APP_PASSWORD"
           APP=".build/Indou.app"
           ZIP="$RUNNER_TEMP/notarize.zip"
           ditto -c -k --keepParent "$APP" "$ZIP"
-          xcrun notarytool submit "$ZIP" \
-              --keychain "$RUNNER_TEMP/app-signing.keychain-db" \
-              --keychain-profile "indou-ci" \
-              --wait
+
+          RESULT=$(xcrun notarytool submit "$ZIP" \
+              --keychain "$KEYCHAIN" --keychain-profile "indou-ci" \
+              --wait --output-format json)
+          echo "$RESULT"
+          STATUS=$(echo "$RESULT" | plutil -extract status raw -o - - 2>/dev/null || echo "")
+          SUB_ID=$(echo "$RESULT" | plutil -extract id raw -o - - 2>/dev/null || echo "")
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "::error::Notarization status: $STATUS"
+            [ -n "$SUB_ID" ] && xcrun notarytool log "$SUB_ID" --keychain "$KEYCHAIN" --keychain-profile "indou-ci" || true
+            exit 1
+          fi
           xcrun stapler staple "$APP"
           xcrun stapler validate "$APP"
 
