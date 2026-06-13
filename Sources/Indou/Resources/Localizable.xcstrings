@@ -2,6 +2,12 @@
   "sourceLanguage" : "en",
   "version" : "1.0",
   "strings" : {
+    "Download" : {
+      "localizations" : {
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "다운로드" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ダウンロード" } }
+      }
+    },
     "Settings…" : {
       "localizations" : {
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "설정…" } },

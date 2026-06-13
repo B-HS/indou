@@ -391,20 +391,35 @@ struct AdvancedPane: View {
 // MARK: - About
 
 struct AboutPane: View {
+    @State private var newVersion: String?
+
     var body: some View {
         PaneHeader(title: String(localized: "About"), subtitle: "Indou", systemImage: "info.circle.fill")
         Card {
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
-                row("Version", Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev")
+                row("Version", UpdateChecker.currentVersion)
                 HStack {
                     Text("GitHub").font(.system(size: 11)).foregroundStyle(.secondary)
                     Spacer()
                     Link("github.com/B-HS/indou", destination: URL(string: "https://github.com/B-HS/indou")!)
                         .font(.system(size: 11))
                 }
-                Text("A fast, modern macOS window switcher.").font(.system(size: 11)).foregroundStyle(.secondary)
+                if let newVersion {
+                    Divider().padding(.vertical, 2)
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.down.circle.fill").foregroundStyle(.green)
+                        Text("New version \(newVersion) is available").font(.system(size: 12, weight: .medium))
+                        Spacer()
+                        Button(String(localized: "Download")) { NSWorkspace.shared.open(UpdateChecker.releasesURL) }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                    }
+                } else {
+                    Text("A fast, modern macOS window switcher.").font(.system(size: 11)).foregroundStyle(.secondary)
+                }
             }
         }
+        .task { newVersion = await UpdateChecker.newerVersionIfAvailable() }
     }
 
     private func row(_ label: String, _ value: String) -> some View {

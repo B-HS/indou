@@ -6,6 +6,10 @@
 
 <p align="center">A fast, modern macOS window switcher — a free AltTab alternative for macOS 26.</p>
 
+<p align="center">
+  <a href="https://github.com/B-HS/indou/releases/latest"><b>↓ Download the latest release</b></a>
+</p>
+
 ## Features
 
 - **Custom shortcuts** — record any modifier + key, with multiple trigger profiles
