@@ -21,11 +21,15 @@ final class SwitcherController {
     private var persistent = false
     private var windowsLoaded = false
     private var pendingSteps = 0
+    private var pendingCommit = false
     private var activeProfile: ShortcutProfile?
+
+    private var sessionGeneration = 0
 
     private var orderCounter = 0
     private var appActivationOrder: [pid_t: Int] = [:]
     private var windowFocusOrder: [WindowID: Int] = [:]
+    private var lastFocusedWindow: (id: WindowID, pid: pid_t)?
     private var activationObserver: NSObjectProtocol?
 
     init(store: PreferenceStore) {
@@ -49,6 +53,13 @@ final class SwitcherController {
                 guard let self else { return }
                 self.orderCounter += 1
                 self.appActivationOrder[app.processIdentifier] = self.orderCounter
+                // This activation fires right after commit() focuses a window; keep
+                // that window ranked above its own app's siblings (which would
+                // otherwise inherit the just-bumped per-app order).
+                if let last = self.lastFocusedWindow, last.pid == app.processIdentifier {
+                    self.orderCounter += 1
+                    self.windowFocusOrder[last.id] = self.orderCounter
+                }
             }
         }
         // The CGEventTap is invalidated/disabled across sleep, display reconfig,
@@ -201,17 +212,29 @@ final class SwitcherController {
         sessionActive = true
         persistent = false
         windowsLoaded = false
-        // Opening points at the currently-active window (index 0 after MRU sort).
-        // Subsequent Tab presses advance from there.
-        pendingSteps = 0
+        pendingCommit = false
+        // New session id so a still-pending reload Task from a prior session bails
+        // instead of clobbering this one's results.
+        sessionGeneration += 1
+        let generation = sessionGeneration
+        // Opening already advances one step, like the classic alt-tab tap: forward
+        // pre-selects the previous window (index 1 after MRU sort), reverse the last
+        // (index count-1). Subsequent Tab presses advance from there.
+        pendingSteps = reverse ? -1 : 1
         activeProfile = profile
+        // Drop the previous session's snapshot so a pre-load commit can never act on
+        // a stale window / dead AX element, and so thumbnails are re-captured fresh.
+        model.windows = []
+        model.selectedIndex = 0
+        liveByID = [:]
         model.multiSelected = []
         model.searchQuery = ""
+        thumbnails.clear()
 
-        Task { await loadWindows(for: profile, preserveSelection: false) }
+        Task { await loadWindows(for: profile, preserveSelection: false, generation: generation) }
     }
 
-    private func loadWindows(for profile: ShortcutProfile, preserveSelection: Bool) async {
+    private func loadWindows(for profile: ShortcutProfile, preserveSelection: Bool, generation: Int) async {
         await thumbnails.refreshContent()
         let live = await enumerator.enumerate()
 
@@ -227,7 +250,8 @@ final class SwitcherController {
         let matcher = ExceptionMatcher(rules: store.settings.exceptions)
         let filtered = resolver.resolve(windows: ranked, criteria: profile.filter, context: context, matcher: matcher)
 
-        guard sessionActive else { return }
+        // Bail if the session ended or a newer one started while we were awaiting.
+        guard sessionActive, generation == sessionGeneration else { return }
 
         model.appearance = store.settings.appearance
         model.animationEnabled = store.settings.animation.enabled && !reduceMotionActive()
@@ -240,6 +264,14 @@ final class SwitcherController {
             model.selectedIndex = min(max(0, model.selectedIndex), count - 1)
         } else {
             model.selectedIndex = ((pendingSteps % count) + count) % count
+        }
+
+        // The modifier was released before the list was ready — focus the resolved
+        // selection now instead of dropping the switch.
+        if pendingCommit {
+            pendingCommit = false
+            commit()
+            return
         }
 
         layoutAndPresent(count: count)
@@ -285,13 +317,19 @@ final class SwitcherController {
     }
 
     private func commit() {
+        // Released before the window list finished loading: defer the focus until
+        // loadWindows resolves the selection, mirroring advance()'s pendingSteps
+        // buffering, instead of dropping the switch.
+        guard windowsLoaded else { pendingCommit = true; return }
         defer { closeSession(commit: true) }
         guard let selected = model.selectedWindow, let live = liveByID[selected.id] else {
             Log.windows.error("commit: no selected window (index=\(self.model.selectedIndex) count=\(self.model.windows.count))")
             return
         }
         Log.windows.info("commit focus '\(selected.title)' (\(selected.appName)) wid=\(selected.id)")
-        windowFocusOrder[selected.id] = { orderCounter += 1; return orderCounter }()
+        orderCounter += 1
+        windowFocusOrder[selected.id] = orderCounter
+        lastFocusedWindow = (selected.id, selected.pid)
         WindowActions.focus(live, usePrivateFocus: store.settings.advanced.usePreciseFocus)
     }
 
@@ -300,6 +338,9 @@ final class SwitcherController {
         sessionActive = false
         persistent = false
         windowsLoaded = false
+        pendingCommit = false
+        // Invalidate any reload Task still in flight for this session.
+        sessionGeneration += 1
         panel.dismiss()
         backdrop.dismiss()
         model.multiSelected = []
@@ -347,9 +388,10 @@ final class SwitcherController {
         guard sessionActive, let profile = activeProfile else { return }
         // Re-enumerate after a short delay so the closed/minimized window is gone,
         // keeping the current cursor position.
+        let generation = sessionGeneration
         Task {
             try? await Task.sleep(for: .milliseconds(180))
-            await loadWindows(for: profile, preserveSelection: true)
+            await loadWindows(for: profile, preserveSelection: true, generation: generation)
         }
     }
 

@@ -55,7 +55,7 @@ public struct ExceptionMatcher: Sendable {
     }
 
     /// Whether a window should be removed from the switcher list.
-    /// `appWindowCount` is how many windows that window's app currently has.
+    /// `appWindowCount` is how many open (non-minimized, non-hidden) windows the app currently has.
     public func shouldHide(_ window: WindowState, appWindowCount: Int) -> Bool {
         guard let rule = rule(forBundleID: window.appBundleID) else { return false }
         switch rule.hide {

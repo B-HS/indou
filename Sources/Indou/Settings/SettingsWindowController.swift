@@ -12,6 +12,8 @@ final class SettingsWindowController {
     private let launchAtLogin = LaunchAtLogin()
 
     func show(store: PreferenceStore, controller: SwitcherController) {
+        // Never inherit a stale "recording" gate from a previous Settings visit.
+        controller.isRecordingShortcut = false
         if let window {
             NSApp.activate(ignoringOtherApps: true)
             window.makeKeyAndOrderFront(nil)
@@ -32,6 +34,11 @@ final class SettingsWindowController {
         window.standardWindowButton(.zoomButton)?.isHidden = true
 
         self.window = window
+        // Closing the window can't deliver SwiftUI .onDisappear (the view is
+        // retained), so clear the recording gate here too as a safety net.
+        NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak controller] _ in
+            MainActor.assumeIsolated { controller?.isRecordingShortcut = false }
+        }
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }

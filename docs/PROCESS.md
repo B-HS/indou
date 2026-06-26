@@ -92,6 +92,13 @@
 - [ ] 업데이트 정책(Sparkle 검토)·크래시 정책, 앱 아이콘/리소스
 - [ ] 실기 성능 프로파일링(ProMotion, 50/100/300창, 첫 표시<50ms·전환 120Hz)
 
+## M6 — 전체 코드 감사 + 코어 루프 버그 수정 (2026-06-26)
+멀티에이전트 워크플로우 + 독립 리뷰. 확정 12 / 런타임검증 1 / 오탐 1. 전문 `docs/bug/0004-audit-2026-06-26.md`.
+- [x] 코어 루프 5건 수정(A~D): 단일 ⌥Tab 미전환·reverse 미사용(`openSession`), 릴리즈 경쟁(`pendingCommit`), 썸네일 캐시 미정리(`clear()` 연결), AX off-main(`WindowEnumerator`)
+- [x] 추가 6건 수정(E~J): 세션 generation, `whenNoOpenWindow` 의미부여, `wordStarts` 대문자경계, ShortcutRecorder 고착, 메뉴바 토글 반영, MRU 형제 역전. 회귀 테스트 3건 추가
+- [x] `swift build`(Swift 6 strict) + `swift test`(49) 통과 → **확정 12건 전부 수정**
+- [ ] 수정분 실기 수동 검증(핫키·포커스·이벤트 탭) — `docs/history/0004` 검증 항목
+
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
 - 단위 테스트 실 작성 전 사용자에게 범위 재확인(컨벤션).

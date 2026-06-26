@@ -23,7 +23,7 @@ final class WindowEnumerator {
 
     func enumerate() async -> [LiveWindow] {
         let scWindows = await fetchShareableWindows()
-        let axByWindowID = collectAccessibilityWindows()
+        let axByWindowID = await Self.collectAccessibilityWindows(apps: runningRegularApps())
         let scByID = Dictionary(scWindows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
         let pidsWithStandardWindow = Set(axByWindowID.values.filter { $0.isStandardWindow == true }.map(\.pid))
 
@@ -101,7 +101,13 @@ final class WindowEnumerator {
 
     // MARK: - Accessibility pass
 
-    private struct AXWindowInfo {
+    private struct AppSnapshot: Sendable {
+        let pid: pid_t
+        let name: String
+        let bundleID: String?
+    }
+
+    private struct AXWindowInfo: Sendable {
         nonisolated(unsafe) let element: AXUIElement
         let pid: pid_t
         let appName: String
@@ -117,17 +123,23 @@ final class WindowEnumerator {
         }
     }
 
-    private func collectAccessibilityWindows() -> [WindowID: AXWindowInfo] {
-        var result: [WindowID: AXWindowInfo] = [:]
-        let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.processIdentifier != ownPID }
+    private func runningRegularApps() -> [AppSnapshot] {
+        NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && $0.processIdentifier != ownPID }
+            .map { AppSnapshot(pid: $0.processIdentifier, name: $0.localizedName ?? "", bundleID: $0.bundleIdentifier) }
+    }
 
+    // The cross-process AX pass does one messaging round-trip per app and window,
+    // each with a 0.5s timeout, so it can stall for a while when apps are busy. The
+    // global event tap shares the main run loop and would be disabled by timeout if
+    // this blocked the main thread, so it runs off the main actor (the AX C API is
+    // thread-safe). Only Sendable snapshots cross the boundary.
+    nonisolated private static func collectAccessibilityWindows(apps: [AppSnapshot]) async -> [WindowID: AXWindowInfo] {
+        var result: [WindowID: AXWindowInfo] = [:]
         for app in apps {
-            let pid = app.processIdentifier
-            let axApp = AXUIElementCreateApplication(pid)
+            let axApp = AXUIElementCreateApplication(app.pid)
             axApp.setMessagingTimeout(0.5)
             guard let windows = axApp.axWindows else { continue }
-            let name = app.localizedName ?? ""
-            let bundleID = app.bundleIdentifier
 
             for window in windows {
                 guard let id = WindowServerInfo.windowID(for: window) else { continue }
@@ -137,9 +149,9 @@ final class WindowEnumerator {
                 }
                 result[id] = AXWindowInfo(
                     element: window,
-                    pid: pid,
-                    appName: name,
-                    bundleID: bundleID,
+                    pid: app.pid,
+                    appName: app.name,
+                    bundleID: app.bundleID,
                     title: window.axTitle,
                     isMinimized: window.axIsMinimized,
                     isFullscreen: window.axIsFullscreen,

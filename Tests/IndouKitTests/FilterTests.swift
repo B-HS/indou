@@ -96,4 +96,28 @@ struct ExceptionMatcherTests {
         #expect(m.shouldIgnoreShortcut(bundleID: "com.game.x", isFullscreen: true))
         #expect(!m.shouldIgnoreShortcut(bundleID: "com.game.x", isFullscreen: false))
     }
+
+    @Test("hide=whenNoOpenWindow: 모든 창이 최소화면 숨김")
+    func hideWhenNoOpenWindow() {
+        let m = ExceptionMatcher(rules: [ExceptionRule(bundleIDPrefix: "com.ghost", hide: .whenNoOpenWindow)])
+        let windows = [
+            WindowState(id: 1, appName: "Ghost", appBundleID: "com.ghost.app", pid: 10, isMinimized: true),
+            WindowState(id: 2, appName: "Open", appBundleID: "com.open.app", pid: 20),
+        ]
+        let r = WindowFilterResolver().resolve(windows: windows, criteria: WindowFilterCriteria(), matcher: m)
+        #expect(!r.map(\.id).contains(1))
+        #expect(r.map(\.id).contains(2))
+    }
+
+    @Test("hide=whenNoOpenWindow: 열린 창이 있으면 유지")
+    func keepWhenHasOpenWindow() {
+        let m = ExceptionMatcher(rules: [ExceptionRule(bundleIDPrefix: "com.ghost", hide: .whenNoOpenWindow)])
+        let windows = [
+            WindowState(id: 1, appName: "Ghost", appBundleID: "com.ghost.app", pid: 10, isMinimized: true),
+            WindowState(id: 3, appName: "Ghost", appBundleID: "com.ghost.app", pid: 10),
+        ]
+        let r = WindowFilterResolver().resolve(windows: windows, criteria: WindowFilterCriteria(), matcher: m)
+        #expect(r.map(\.id).contains(1))
+        #expect(r.map(\.id).contains(3))
+    }
 }

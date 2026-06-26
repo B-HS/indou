@@ -52,6 +52,9 @@ enum TextNormalize {
                 flags[i] = true
             } else if prev.isLowercase, cur.isUppercase {
                 flags[i] = true
+            } else if prev.isUppercase, cur.isUppercase, i + 1 < original.count, original[i + 1].isLowercase {
+                // Uppercase run ending a Title-cased word: the "S" in "HTTPServer".
+                flags[i] = true
             } else if prev.isNumber != cur.isNumber, !isSeparator(cur) {
                 flags[i] = true
             }

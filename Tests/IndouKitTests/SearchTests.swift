@@ -26,6 +26,18 @@ struct FuzzyMatcherTests {
         #expect(r!.score > MatchTier.substring.rawValue)
     }
 
+    @Test("word prefix/acronym: 대문자 연속 경계 (HTTPServer)")
+    func wordBoundaryUppercaseRun() {
+        // "Server" 가 대문자 연속(HTTP) 종료 경계에서 시작 → substring 이 아닌 word-prefix
+        let prefix = FuzzyMatcher.match(query: "server", candidate: "HTTPServer")
+        #expect(prefix != nil)
+        #expect(prefix!.score > MatchTier.substring.rawValue)
+        // 약어 "hs" → H(0), S(4) 초성
+        let acronym = FuzzyMatcher.match(query: "hs", candidate: "HTTPServer")
+        #expect(acronym != nil)
+        #expect(acronym!.matchedIndices == [0, 4])
+    }
+
     @Test("acronym: 단어 첫글자")
     func acronym() {
         let r = FuzzyMatcher.match(query: "gc", candidate: "Google Chrome")

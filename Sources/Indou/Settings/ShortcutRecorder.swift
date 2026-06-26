@@ -33,6 +33,12 @@ struct ShortcutRecorder: View {
             recording = false
         })
         .onChange(of: recording) { _, value in onRecordingChange(value) }
+        .onDisappear {
+            // Disarm if the pane/window goes away mid-recording — otherwise the
+            // controller's isRecordingShortcut stays true and the global hotkey dies.
+            if recording { recording = false }
+            onRecordingChange(false)
+        }
     }
 
     private var display: String {

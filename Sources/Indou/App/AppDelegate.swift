@@ -1,5 +1,6 @@
 import AppKit
 import IndouKit
+import Observation
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -12,13 +13,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Log.app.info("Indou launching")
         AppRelaunch.languageAtLaunch = store.settings.general.language
         AppRelaunch.applyLanguage(store.settings.general.language)
-        installStatusItem()
+        applyMenubarIconVisibility()
+        observeMenubarIconSetting()
         bootstrap()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         permissionTask?.cancel()
         controller.restoreNativeCommandTab()
+    }
+
+    /// With the menu-bar icon hidden there is no visible UI, so reopening the app
+    /// (Finder, `open`, relaunch) should still surface Settings.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        openSettings()
+        return true
     }
 
     // MARK: - Bootstrap + permissions
@@ -52,6 +61,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.image = menuBarImage()
         item.menu = buildMenu()
         statusItem = item
+    }
+
+    /// Install or remove the status item to match the persisted setting.
+    private func applyMenubarIconVisibility() {
+        let shouldShow = store.settings.general.showMenubarIcon
+        if shouldShow, statusItem == nil {
+            installStatusItem()
+        } else if !shouldShow, let item = statusItem {
+            NSStatusBar.system.removeStatusItem(item)
+            statusItem = nil
+        }
+    }
+
+    /// React to the "Show menu bar icon" toggle. @Observable tracking is one-shot,
+    /// so re-arm after each change.
+    private func observeMenubarIconSetting() {
+        withObservationTracking {
+            _ = store.settings.general.showMenubarIcon
+        } onChange: {
+            Task { @MainActor in
+                self.applyMenubarIconVisibility()
+                self.observeMenubarIconSetting()
+            }
+        }
     }
 
     private func menuBarImage() -> NSImage? {

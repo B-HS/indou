@@ -68,7 +68,9 @@ public struct WindowFilterResolver: Sendable {
         context: FilterContext = .init(),
         matcher: ExceptionMatcher = .init()
     ) -> [WindowState] {
-        let appWindowCounts = Dictionary(grouping: windows, by: \.pid).mapValues(\.count)
+        // Count only open (non-minimized, non-hidden) windows per app so the
+        // `.whenNoOpenWindow` exception can hide apps whose windows are all minimized.
+        let appOpenWindowCounts = Dictionary(grouping: windows.filter { !$0.isMinimized && !$0.isHidden }, by: \.pid).mapValues(\.count)
 
         var head: [WindowState] = []
         var tail: [WindowState] = []
@@ -78,7 +80,7 @@ public struct WindowFilterResolver: Sendable {
             guard passesApps(window, criteria, context) else { continue }
             guard passesSpaces(window, criteria, context) else { continue }
             guard passesScreens(window, criteria, context) else { continue }
-            if matcher.shouldHide(window, appWindowCount: appWindowCounts[window.pid] ?? 0) { continue }
+            if matcher.shouldHide(window, appWindowCount: appOpenWindowCounts[window.pid] ?? 0) { continue }
             if criteria.groupTabs == .combined, window.kind == .tab { continue }
 
             switch categoryDisposition(window, criteria) {
