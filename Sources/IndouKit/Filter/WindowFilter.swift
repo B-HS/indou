@@ -74,6 +74,7 @@ public struct WindowFilterResolver: Sendable {
 
         var head: [WindowState] = []
         var tail: [WindowState] = []
+        var appEntries: [WindowState] = []
 
         for window in windows {
             guard passesSize(window, criteria) else { continue }
@@ -83,6 +84,12 @@ public struct WindowFilterResolver: Sendable {
             if matcher.shouldHide(window, appWindowCount: appOpenWindowCounts[window.pid] ?? 0) { continue }
             if criteria.groupTabs == .combined, window.kind == .tab { continue }
 
+            // Background-app stand-ins always sort after every real window.
+            if window.isAppEntry {
+                appEntries.append(window)
+                continue
+            }
+
             switch categoryDisposition(window, criteria) {
             case .exclude: continue
             case .head: head.append(window)
@@ -90,7 +97,9 @@ public struct WindowFilterResolver: Sendable {
             }
         }
 
-        return sorted(head, by: criteria.windowOrder) + sorted(tail, by: criteria.windowOrder)
+        return sorted(head, by: criteria.windowOrder)
+            + sorted(tail, by: criteria.windowOrder)
+            + sorted(appEntries, by: .alphabetical)
     }
 
     // MARK: - Predicates

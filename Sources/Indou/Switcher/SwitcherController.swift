@@ -124,7 +124,9 @@ final class SwitcherController {
         model.onClick = { [weak self] index, additive in
             guard let self else { return }
             self.model.selectedIndex = index
-            if additive {
+            // Single mode (or a plain click): act immediately and dismiss. Multi
+            // mode only: ⌘/⇧-click toggles the selection set.
+            if additive, self.model.multiSelectEnabled {
                 guard let id = self.model.selectedWindow?.id else { return }
                 self.model.multiSelected.formSymmetricDifference([id])
             } else {
@@ -255,6 +257,7 @@ final class SwitcherController {
 
         model.appearance = store.settings.appearance
         model.animationEnabled = store.settings.animation.enabled && !reduceMotionActive()
+        model.multiSelectEnabled = store.settings.input.multiSelectEnabled
         model.windows = filtered
         windowsLoaded = true
 
@@ -374,7 +377,12 @@ final class SwitcherController {
 
     private func closeWindow(_ id: WindowID) {
         guard let live = liveByID[id] else { return }
-        WindowActions.close(live)
+        // App stand-in has no window to close — the red button quits the app.
+        if live.state.isAppEntry {
+            WindowActions.quitApp(pid: live.state.pid)
+        } else {
+            WindowActions.close(live)
+        }
         refreshAfterAction()
     }
 

@@ -24,6 +24,7 @@ final class SwitcherViewModel {
 
     var appearance = AppearanceSettings()
     var animationEnabled = true
+    var multiSelectEnabled = false
     var searchQuery = ""
 
     @ObservationIgnored let thumbnails: ThumbnailStore

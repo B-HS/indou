@@ -104,6 +104,14 @@ Force Quit 처럼 창 없는 regular 앱도 표시하는 토글. 상세 `docs/hi
 - [x] `WindowActions.focus` 앱 활성화, `GeneralSettings.showBackgroundApps`(기본 OFF) + General 페인 토글, 앱 엔트리 창 컨트롤 숨김, 앱 엔트리는 앱 아이콘 표시
 - [x] `swift build` + `swift test`(49) 통과
 
+## M8 — 스위처 다듬기 4건 (2026-06-27)
+상세 `docs/history/0006-switcher-refinements.md`.
+- [x] 백그라운드 앱 항상 맨 뒤(resolver 앱 엔트리 버킷 분리, 테스트 추가)
+- [x] 백그라운드 앱 × = 앱 종료(`closeWindow` 분기, 셀 × 표시)
+- [x] 밖 클릭/Esc 로 커밋 없이 닫힘 + `BackdropView.acceptsFirstMouse` 보강
+- [x] 단일/다중 선택 모드 토글(`input.multiSelectEnabled`, 기본 단일) + Input 페인 토글
+- [x] `swift build` + `swift test`(50) 통과
+
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
 - 단위 테스트 실 작성 전 사용자에게 범위 재확인(컨벤션).

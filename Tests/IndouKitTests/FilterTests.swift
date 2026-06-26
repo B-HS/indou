@@ -72,6 +72,18 @@ struct WindowFilterTests {
         let r = WindowFilterResolver().resolve(windows: sample(), criteria: c)
         #expect(r.map(\.id) == [1, 2, 3, 4])
     }
+
+    @Test("앱 엔트리는 MRU 가 높아도 항상 맨 뒤")
+    func appEntriesAlwaysLast() {
+        let windows = [
+            WindowState(id: 100, appName: "Background", pid: 99, isAppEntry: true, lastFocusOrder: 999),
+            WindowState(id: 1, appName: "Real A", pid: 1, lastFocusOrder: 1),
+            WindowState(id: 2, appName: "Real B", pid: 2, lastFocusOrder: 2),
+        ]
+        let r = WindowFilterResolver().resolve(windows: windows, criteria: WindowFilterCriteria(windowOrder: .recentlyFocused))
+        // 실제 창이 MRU 순으로 먼저, 앱 엔트리는 lastFocusOrder 999 라도 맨 뒤
+        #expect(r.map(\.id) == [2, 1, 100])
+    }
 }
 
 @Suite("ExceptionMatcher blacklist")

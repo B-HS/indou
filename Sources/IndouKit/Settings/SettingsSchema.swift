@@ -87,6 +87,9 @@ public struct InputSettings: Codable, Sendable, Equatable {
     public var arrowKeysEnabled: Bool = true
     public var vimKeysEnabled: Bool = false
     public var mouseHoverEnabled: Bool = true
+    /// Multi-select mode (marquee drag + ⌘/⇧-click batch selection). Off = single:
+    /// a click acts immediately and dismisses.
+    public var multiSelectEnabled: Bool = false
 
     public init() {}
 
@@ -96,6 +99,7 @@ public struct InputSettings: Codable, Sendable, Equatable {
         d.arrowKeysEnabled = try c.decodeIfPresent(Bool.self, forKey: .arrowKeysEnabled) ?? d.arrowKeysEnabled
         d.vimKeysEnabled = try c.decodeIfPresent(Bool.self, forKey: .vimKeysEnabled) ?? d.vimKeysEnabled
         d.mouseHoverEnabled = try c.decodeIfPresent(Bool.self, forKey: .mouseHoverEnabled) ?? d.mouseHoverEnabled
+        d.multiSelectEnabled = try c.decodeIfPresent(Bool.self, forKey: .multiSelectEnabled) ?? d.multiSelectEnabled
         self = d
     }
 }

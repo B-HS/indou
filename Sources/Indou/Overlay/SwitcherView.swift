@@ -106,6 +106,7 @@ struct SwitcherView: View {
     private var marqueeGesture: some Gesture {
         DragGesture(minimumDistance: 8, coordinateSpace: .named("grid"))
             .onChanged { value in
+                guard model.multiSelectEnabled else { return }
                 let rect = CGRect(
                     x: min(value.startLocation.x, value.location.x),
                     y: min(value.startLocation.y, value.location.y),
@@ -169,10 +170,10 @@ private struct SwitcherCell: View {
     // minimized windows offer only close; others offer close + minimize + fullscreen.
     @ViewBuilder
     private var hoverControls: some View {
-        if hovering, !window.isAppEntry {
+        if hovering {
             HStack(spacing: 5) {
-                controlButton("xmark", .red, onClose, help: "Close window")
-                if !window.isMinimized {
+                controlButton("xmark", .red, onClose, help: window.isAppEntry ? "Quit app" : "Close window")
+                if !window.isMinimized, !window.isAppEntry {
                     controlButton("minus", .yellow, onMinimize, help: "Minimize window")
                     controlButton(
                         window.isFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",

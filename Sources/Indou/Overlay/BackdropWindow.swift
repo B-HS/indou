@@ -45,6 +45,9 @@ final class BackdropWindow: NSPanel {
 
 private final class BackdropView: NSView {
     var onClick: (() -> Void)?
+    // Indou is an accessory app, so the click that dismisses the switcher is a
+    // "first mouse" on an inactive window — deliver it instead of swallowing it.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func mouseDown(with event: NSEvent) { onClick?() }
     override func rightMouseDown(with event: NSEvent) { onClick?() }
     override func otherMouseDown(with event: NSEvent) { onClick?() }

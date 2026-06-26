@@ -293,6 +293,18 @@ struct InputPane: View {
                 Toggle(isOn: store.binding(\.input.mouseHoverEnabled)) { Text("Select on mouse hover").font(.system(size: 12)) }.toggleStyle(.switch)
             }
         }
+
+        Card {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+                Label("Selection", systemImage: "cursorarrow.rays").font(.system(size: 13, weight: .semibold))
+                Toggle(isOn: store.binding(\.input.multiSelectEnabled)) {
+                    Text("Multi-select mode").font(.system(size: 12))
+                }
+                .toggleStyle(.switch)
+                Text("On: drag a marquee or ⌘/⇧-click to select multiple, then act from the right-click menu. Off: a click selects that window and closes the switcher right away.")
+                    .font(.system(size: 10)).foregroundStyle(.secondary)
+            }
+        }
     }
 }
 
