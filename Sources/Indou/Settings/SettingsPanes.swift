@@ -67,6 +67,18 @@ struct GeneralPane: View {
                 .labelsHidden()
             }
         }
+
+        Card {
+            VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+                Label("Window list", systemImage: "macwindow.on.rectangle").font(.system(size: 13, weight: .semibold))
+                Toggle(isOn: store.binding(\.general.showBackgroundApps)) {
+                    Text("Show background apps").font(.system(size: 12))
+                }
+                .toggleStyle(.switch)
+                Text("Also list running apps that have no open window, like the Force Quit Applications list.")
+                    .font(.system(size: 10)).foregroundStyle(.secondary)
+            }
+        }
     }
 }
 

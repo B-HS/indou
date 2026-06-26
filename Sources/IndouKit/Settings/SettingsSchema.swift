@@ -9,6 +9,7 @@ public struct GeneralSettings: Codable, Sendable, Equatable {
     public var showMenubarIcon: Bool = true
     public var language: AppLanguage = .system
     public var showOnScreen: ShowOnScreen = .includingMouse
+    public var showBackgroundApps: Bool = false
 
     public init() {}
 
@@ -19,6 +20,7 @@ public struct GeneralSettings: Codable, Sendable, Equatable {
         d.showMenubarIcon = try c.decodeIfPresent(Bool.self, forKey: .showMenubarIcon) ?? d.showMenubarIcon
         d.language = try c.decodeIfPresent(AppLanguage.self, forKey: .language) ?? d.language
         d.showOnScreen = try c.decodeIfPresent(ShowOnScreen.self, forKey: .showOnScreen) ?? d.showOnScreen
+        d.showBackgroundApps = try c.decodeIfPresent(Bool.self, forKey: .showBackgroundApps) ?? d.showBackgroundApps
         self = d
     }
 }

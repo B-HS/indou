@@ -8,6 +8,11 @@ import PrivateWindowServer
 @MainActor
 enum WindowActions {
     static func focus(_ window: LiveWindow, usePrivateFocus: Bool) {
+        // App stand-in (no window): just bring the app forward.
+        if window.state.isAppEntry {
+            NSRunningApplication(processIdentifier: window.state.pid)?.activate()
+            return
+        }
         // Restore a minimized window before raising it.
         if window.state.isMinimized {
             window.axElement?.setValue(kAXMinimizedAttribute as String, false as CFBoolean)

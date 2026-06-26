@@ -21,9 +21,10 @@ final class WindowEnumerator {
     private var creationOrder: [WindowID: Int] = [:]
     private var nextCreation = 0
 
-    func enumerate() async -> [LiveWindow] {
+    func enumerate(includeBackgroundApps: Bool) async -> [LiveWindow] {
         let scWindows = await fetchShareableWindows()
-        let axByWindowID = await Self.collectAccessibilityWindows(apps: runningRegularApps())
+        let apps = runningRegularApps()
+        let axByWindowID = await Self.collectAccessibilityWindows(apps: apps)
         let scByID = Dictionary(scWindows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
         let pidsWithStandardWindow = Set(axByWindowID.values.filter { $0.isStandardWindow == true }.map(\.pid))
 
@@ -79,7 +80,36 @@ final class WindowEnumerator {
             merged[id] = LiveWindow(state: state, axElement: nil)
         }
 
+        // 3. Optional: a stand-in entry per running regular app that has no window
+        //    at all (background / all-windows-closed processes — what Force Quit
+        //    lists but a window switcher normally omits).
+        if includeBackgroundApps {
+            let pidsWithWindow = Set(merged.values.map { $0.state.pid })
+            for app in apps where !pidsWithWindow.contains(app.pid) {
+                let id = Self.appEntryWindowID(for: app.pid)
+                guard merged[id] == nil else { continue }
+                var state = WindowState(
+                    id: id,
+                    title: app.name,
+                    appName: app.name,
+                    appBundleID: app.bundleID,
+                    pid: app.pid,
+                    isOnScreen: false,
+                    isAppEntry: true
+                )
+                state.creationOrder = creation(for: id)
+                merged[id] = LiveWindow(state: state, axElement: nil)
+            }
+        }
+
         return Array(merged.values)
+    }
+
+    /// A synthetic CGWindowID for an app stand-in: the pid with the high bit set so
+    /// it can never collide with a real window id (those are assigned from low
+    /// numbers and never approach 2^31).
+    private static func appEntryWindowID(for pid: pid_t) -> WindowID {
+        0x8000_0000 | (WindowID(UInt32(bitPattern: pid)) & 0x7FFF_FFFF)
     }
 
     private func creation(for id: WindowID) -> Int {

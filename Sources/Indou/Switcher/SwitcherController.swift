@@ -236,7 +236,7 @@ final class SwitcherController {
 
     private func loadWindows(for profile: ShortcutProfile, preserveSelection: Bool, generation: Int) async {
         await thumbnails.refreshContent()
-        let live = await enumerator.enumerate()
+        let live = await enumerator.enumerate(includeBackgroundApps: store.settings.general.showBackgroundApps)
 
         liveByID = Dictionary(live.map { ($0.state.id, $0) }, uniquingKeysWith: { a, _ in a })
         IconProvider.shared.prune(keeping: Set(live.map { $0.state.pid }))

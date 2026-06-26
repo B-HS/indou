@@ -169,7 +169,7 @@ private struct SwitcherCell: View {
     // minimized windows offer only close; others offer close + minimize + fullscreen.
     @ViewBuilder
     private var hoverControls: some View {
-        if hovering {
+        if hovering, !window.isAppEntry {
             HStack(spacing: 5) {
                 controlButton("xmark", .red, onClose, help: "Close window")
                 if !window.isMinimized {

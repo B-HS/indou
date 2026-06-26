@@ -97,7 +97,12 @@
 - [x] 코어 루프 5건 수정(A~D): 단일 ⌥Tab 미전환·reverse 미사용(`openSession`), 릴리즈 경쟁(`pendingCommit`), 썸네일 캐시 미정리(`clear()` 연결), AX off-main(`WindowEnumerator`)
 - [x] 추가 6건 수정(E~J): 세션 generation, `whenNoOpenWindow` 의미부여, `wordStarts` 대문자경계, ShortcutRecorder 고착, 메뉴바 토글 반영, MRU 형제 역전. 회귀 테스트 3건 추가
 - [x] `swift build`(Swift 6 strict) + `swift test`(49) 통과 → **확정 12건 전부 수정**
-- [ ] 수정분 실기 수동 검증(핫키·포커스·이벤트 탭) — `docs/history/0004` 검증 항목
+
+## M7 — 기능: Show background apps 토글 (2026-06-26)
+Force Quit 처럼 창 없는 regular 앱도 표시하는 토글. 상세 `docs/history/0005-background-apps-toggle.md`.
+- [x] `WindowState.isAppEntry` + `WindowEnumerator.enumerate(includeBackgroundApps:)` 앱 엔트리 생성
+- [x] `WindowActions.focus` 앱 활성화, `GeneralSettings.showBackgroundApps`(기본 OFF) + General 페인 토글, 앱 엔트리 창 컨트롤 숨김, 앱 엔트리는 앱 아이콘 표시
+- [x] `swift build` + `swift test`(49) 통과
 
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).

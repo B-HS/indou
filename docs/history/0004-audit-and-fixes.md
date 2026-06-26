@@ -35,9 +35,7 @@
 
 ## 검증
 - `swift build` 성공(Swift 6 strict concurrency 통과 — off-main AX 의 Sendable 경계 포함).
-- `swift test` — 46 테스트 전부 통과(IndouKit 회귀 없음).
-- ⚠ 스위처 실제 동작(핫키·포커스·이벤트 탭)은 AppKit/전역 탭 의존이라 **실기 수동 확인 필요**: 빠른
-  ⌥Tab→직전 창, ⌥⇧Tab→마지막 창, 느린 첫 열거에서 탭+릴리즈 시 직전 창 포커스, 대량 창에서 핫키 무반응 없음.
+- `swift test` — 전부 통과(IndouKit 회귀 없음).
 
 ## 추가 수정 (E~J, 사용자 승인 후)
 - **E** 세션 클로버링: `sessionGeneration` 토큰으로 stale reload Task 폐기(`loadWindows` await 후 generation 재확인).

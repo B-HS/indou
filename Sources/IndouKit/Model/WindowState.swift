@@ -34,6 +34,11 @@ public struct WindowState: Identifiable, Sendable, Equatable {
     public var frame: CGRect
     public var windowLevel: Int
 
+    /// A stand-in entry for a running app that has no open window (shown only when
+    /// "Show background apps" is on). Focusing it activates the app rather than
+    /// raising a specific window; it carries no live `AXUIElement`.
+    public var isAppEntry: Bool
+
     /// Monotonic counter assigned when the window was last focused (MRU order).
     public var lastFocusOrder: Int
     /// Monotonic counter assigned when the window first appeared.
@@ -55,6 +60,7 @@ public struct WindowState: Identifiable, Sendable, Equatable {
         displayID: DisplayID? = nil,
         frame: CGRect = .zero,
         windowLevel: Int = 0,
+        isAppEntry: Bool = false,
         lastFocusOrder: Int = 0,
         creationOrder: Int = 0
     ) {
@@ -73,6 +79,7 @@ public struct WindowState: Identifiable, Sendable, Equatable {
         self.displayID = displayID
         self.frame = frame
         self.windowLevel = windowLevel
+        self.isAppEntry = isAppEntry
         self.lastFocusOrder = lastFocusOrder
         self.creationOrder = creationOrder
     }
