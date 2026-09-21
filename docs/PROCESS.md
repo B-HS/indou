@@ -121,6 +121,15 @@ Chrome·Codex 전환 시 네이티브 UI는 반응하지만 WebContents가 멈�
 - [x] 버그 해결 문서와 필요한 회귀 검증 경계를 갱신 — `docs/bug/0005-chromium-webcontents-freeze.md`
 - [x] 독립 검증(`swift build`, `swift test` 50개) 후 관련 파일만 커밋·`dev` push — `4b63277`
 
+## M10 — Chromium 시크릿 창 재현 프리즈 수정 (2026-09-21)
+Chrome 일반 창과 시크릿 창이 함께 있을 때 다른 앱에서 ⌘Tab으로 일반 창에 복귀하면 WebContents가 멈추는 확정 재현을 기준으로 재진단한다.
+- [x] v0.1.6 실기 로그 확보 — target `wid=41340`, private focus 성공 직전 ScreenCaptureKit system capture 확인
+- [x] 썸네일 캡처·private focus·AX raise를 분리한 A/B로 직접 트리거 확정 — 진행 중 ScreenCaptureKit 캡처와 Chromium 전면화의 중첩
+- [x] 확정 트리거를 제거하되 일반/시크릿 다중 창 선택과 썸네일 표시 동작을 보존 — active 캡처 자연 종료 후 focus
+- [x] 확정 재현 절차·원인·수정 결과를 버그 문서에 갱신 — `docs/bug/0005-chromium-webcontents-freeze.md`
+- [x] 위험 비례 검증 완료 — `swift build`, `swift test` 50개, 서명 debug 앱 실기 5회 연속 통과
+- [ ] 관련 파일만 커밋·`dev` push 후 `prod` 릴리스
+
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
 - 단위 테스트 실 작성 전 사용자에게 범위 재확인(컨벤션).

@@ -1,12 +1,12 @@
 # 0005 — Chromium WebContents 프리즈 (Chrome·Codex 전환 후 마지막 프레임 고정)
 
-2026-09-21 · macOS 26.5.2 실기 관찰 + Chromium 153 소스·Apple AX 계약 대조
+2026-09-21 · macOS 26.5.2 실기 A/B + Chromium 153 소스·Apple AX 계약 대조
 
 ## 문서 목적과 적용 범위
 
 - 목적: Indou 전환 후 Chromium 계열 앱의 WebContents가 마지막 프레임으로 멈추는 증상의 관찰 근거, 원인 판정, 수정 동작, 검증 상태를 재사용 가능하게 남긴다.
 - 적용 범위: macOS 26 계열 + Chromium 153 계열 앱(Chrome·Codex 등). 포커스/오버레이/썸네일 캡처 경로.
-- 주의: 실기 A/B 재현 확인 전이므로 "완전 해결"이 아니라 **완화**로만 표기한다.
+- 해결 범위: ScreenCaptureKit 썸네일 캡처가 끝나기 전에 Chromium 창을 전면화하던 경합을 제거한다.
 
 ## 출처와 대상 버전
 
@@ -34,6 +34,7 @@ Apple AX 계약:
 ## 증상
 
 - 스위처로 전환한 뒤, Chrome/Codex의 주소창·새로고침 같은 native/top chrome은 반응하는데 **WebContents 영역만 마지막 프레임으로 정지**한다.
+- 확정 재현: Chrome 일반 창에서 동적 콘텐츠를 재생하고 시크릿 창을 연 뒤 다른 앱으로 이동한다. 썸네일 캡처가 진행 중인 시점에 Indou로 일반 창을 선택하면 Chrome의 `Page Unresponsive` 창이 나타난다.
 - WindowServer 로그에서 포커스 직후 `OrderWindowGroup`/`orderOut` churn이 관찰됐다.
 - 프리즈 이후 시점의 main/renderer/GPU 프로세스 sample은 idle 상태였다(정지 순간의 상태가 아님).
 - 물리 메모리 128GB 환경이라 단순 메모리 부족은 주원인 후보에서 제외했다.
@@ -51,12 +52,12 @@ Apple AX 계약:
 
 ## 원인 판정
 
-판정(코드·계약 근거 기반, 실기 재현 확인 전):
+실기 A/B로 확인된 직접 트리거는 **진행 중인 ScreenCaptureKit 캡처와 Chromium 창 전면화의 중첩**이다.
 
-1. **오버레이가 focus보다 늦게 내려가면 Chromium 창이 occluded로 판정될 창이 있다.** Indou 오버레이는 `.popUpMenu` 레벨로 모든 Space에 뜨는 패널이라, focus 시점에 남아 있으면 OS가 대상 창을 visible로 보지 않을 수 있다. 1초 지연 반영 규칙 때문에 순간적인 피복도 occluded로 굳을 수 있다.
-2. **occluded가 굳으면 렌더러가 hidden 처리되고, 마지막 프레임이 그대로 남는다.** native UI(브라우저 프로세스)는 살아 있으므로 "top chrome은 반응, WebContents만 정지"라는 관찰과 일치한다(정합성 근거이며 증명은 아님).
-3. **AX 호출이 길게/중복으로 얽히면 포커스 완료가 지연된다.** 앱/창 AX timeout이 지정되지 않았고, main 창 지정·raise·activate가 겹치면 그만큼 창 순서 변경이 늘어난다. WindowServer의 `OrderWindowGroup`/`orderOut` churn이 이 경로와 맞물린다.
-4. **캡처 경로가 세션 경계를 넘어 살아 있으면 전환 중 부하가 겹친다.** 동시성 상한과 세션 취소가 없으면 프레임 전환 직후에도 캡처가 계속 돌아 occlusion/포커스 타이밍과 경합한다.
+1. v0.1.6에서 썸네일을 끄고 같은 private focus·AX raise 경로로 일반 Chrome 창을 선택하면 동적 콘텐츠가 계속 갱신되고 `Page Unresponsive`가 생기지 않았다.
+2. 썸네일을 켠 뒤 스위처를 열고 약 0.4초 안에 같은 창을 선택하자 target `wid=41340` 포커스 직후 `Page Unresponsive`가 재현됐다. 취소된 `Task`가 ScreenCaptureKit 작업의 종료까지 보장하지 않으므로 `cancelPendingCaptures()`만으로는 캡처와 포커스의 중첩을 막지 못했다.
+3. 수정본은 커밋 시 신규 캡처를 폐기하되 실행 중 캡처를 취소하지 않고 완료까지 기다린 다음 포커스한다. 같은 조건을 5회 연속 반복해 모두 target `wid=41340`, `didPrivate=true`, `raised=true`였고 `Page Unresponsive`는 0회였다.
+4. private focus와 AX raise는 썸네일 on/off A/B에서 동일했으므로 단독 직접 트리거에서는 제외했다. Chromium의 macOS 26 occlusion 경로는 프레임 정지가 지속되는 메커니즘과 정합하지만, 이번 실기로 내부 occlusion 상태 전이 자체를 계측한 것은 아니다.
 
 ## 수정 파일과 동작 (현재 코드 확인)
 
@@ -64,8 +65,9 @@ Apple AX 계약:
 
 ### `Sources/Indou/Switcher/SwitcherController.swift`
 
-- `closeSession(commit:)`: `sessionGeneration` 증가 → `thumbnails.cancelPendingCaptures()` → `panel.dismiss()` → `backdrop.dismiss()` 순서로 세션을 닫는다. 캡처 중단이 오버레이 dismiss보다 먼저 온다.
-- `commit()`: `closeSession(commit: true)`를 **먼저** 호출한 뒤 `WindowActions.focus(...)`를 호출한다. 즉 overlay/backdrop orderOut 이후에 포커스를 요청한다.
+- `closeSession(commit:)`: 세션 세대를 무효화하고, commit이면 실행 중 캡처 task의 스냅샷을 받으며 commit이 아니면 기존처럼 task를 취소한다. 이어 panel/backdrop을 dismiss한다.
+- `focusAfterClosing(_:)`: panel/backdrop을 먼저 내린 뒤 스냅샷의 캡처가 자연 종료될 때까지 기다린다. 대기 중 새 세션이 시작되지 않은 경우에만 `WindowActions.focus(...)`를 호출한다.
+- 키보드 commit과 컨텍스트 메뉴 focus가 모두 `focusAfterClosing(_:)`를 사용한다.
 - `loadWindows`: `store.settings.appearance.showThumbnails`가 false면 `thumbnails.refreshContent()`(SCShareableContent 조회)를 아예 호출하지 않는다.
 - `layoutAndPresent`: `guard store.settings.appearance.showThumbnails else { return }`로 캡처 요청을 건너뛴다. true일 때만
   - 최소화 필터: `captureMinimized || !$0.isMinimized` (설정 `advanced.captureMinimizedWindows`가 false면 최소화 창 제외)
@@ -93,7 +95,9 @@ Apple AX 계약:
 ### `Sources/Indou/Capture/ThumbnailStore.swift`
 
 - `concurrencyLimit = min(8, max(1, maxConcurrent))` — 요청 동시성 1...8 상한.
-- `cancelPendingCaptures()`: `generation` 증가, `pending`/`scheduled` 비우고 실행 중 task에 `cancel()`만 건다. **active task는 실제로 `finishCapture`가 불릴 때까지 슬롯을 계속 차지**하므로 다음 세션이 상한을 넘길 수 없다.
+- `invalidatePendingCaptures()`: `generation` 증가, `pending`/`scheduled` 제거, 현재 active task 스냅샷 반환을 한 경로로 통합한다.
+- `cancelPendingCaptures()`: 취소/닫기 경로에서 active task를 취소한다.
+- `capturesToFinishBeforeFocus()`: 포커스 commit 경로에서 active task를 취소하지 않고 반환한다. 호출자는 해당 task가 자연 종료된 뒤 포커스한다.
 - `finishCapture`: `taskGeneration == generation`일 때만 `scheduled` 해제와 이미지 저장을 한다(이전 세대의 늦은 쓰기 차단).
 - `refreshContent()` 실패 시 `scWindows`를 비운다. 이 경우 `requestThumbnails`가 `scWindows[id]` 조회에서 걸러져 stale SCWindow로 캡처하지 않는다.
 
@@ -105,23 +109,21 @@ Apple AX 계약:
 
 ## 검증
 
-- `swift build` 성공: **exit 0, `Build complete! (1.34s)`** — 최종 캡처 통합 상태에서 확인된 결과를 재사용한다(이번 문서 작업에서 재실행하지 않음).
-- `swift test` 성공: **exit 0, 10 suites의 50 tests 통과**.
-- 실기 A/B(프리즈 재현·완화 비교)는 아직 실행하지 않았다.
-- 코드 수준 근거: 위 "수정 파일과 동작"은 파일을 직접 읽어 확인했고, "Chromium 153의 macOS occlusion 경로"는 명시한 4개 소스에서 확인했다.
+- 재현본(v0.1.6): 썸네일 on + 캡처 시작 약 0.4초 뒤 일반 Chrome 창 focus에서 `Page Unresponsive` 재현. 같은 target은 `wid=41340`, private focus와 AX raise는 성공 로그가 남았다.
+- 음성 대조(v0.1.6): 썸네일 off에서 같은 창의 프레임 해시가 연속 변경됐고 `Page Unresponsive`가 없었다.
+- 수정본: 서명된 `.build/Indou.app`에서 썸네일 on 상태로 같은 일반/시크릿 창 전환을 5회 연속 실행했다. 5회 모두 target `wid=41340` 포커스 성공, `Page Unresponsive` 0회, 최종 프레임 해시 연속 변경을 확인했다.
+- `git diff --check && swift build` 성공: exit 0, `Build complete! (2.25s)`.
+- `swift test` 성공: exit 0, 10 suites의 50 tests 통과.
 
 ## 남은 실기 위험
 
-1. **실기 재현 미확인**: 포커스·오버레이 순서 변경이 실제 프리즈를 없애는지/줄이는지 확인되지 않았다. 현재 상태는 완화 후보다.
-2. **occlusion 판정이 OS로 위임된 구조**: orderOut 이후 대상 창의 `NSWindow.occlusionState`가 실제로 visible로 갱신되는지, 1초 지연 예약이 제때 취소되는지는 실기 WindowServer/Chromium 로그로만 확인 가능하다. 갱신이 지연되면 1초 뒤 occluded 반영이 그대로 굳을 수 있다.
-3. **AX `kAXErrorCannotComplete`는 실패 확정이 아님**: Apple 문서상 이 오류는 "동작 실패"가 아니라 응답 지연일 수 있다. 현재 `kAXRaise`는 1회만 호출하고 실패 시 재시도하지 않으므로, 반환값이 로그의 실패로만 남고 실제 raise는 성공했을 여지가 있다. 반대 경우도 있어 로그(`focus wid=... raised=false`)만으로 raise 실패를 단정하지 않는다.
-4. **`kAXMain` 제거의 부작용 미확인**: main 창 지정을 생략한 대가로 일부 앱에서 key/main 상태가 기대와 다를 수 있다(추론, 실기 확인 필요).
-5. **취소된 캡처와 새 세션 캡처의 중복 가능성(추론)**: `cancelPendingCaptures`가 `scheduled`를 즉시 비우므로 같은 창이 다음 세션에서 다시 큐잉될 수 있다. 상한은 active task 수로 계속 지켜지지만, 같은 창에 대한 캡처가 겹칠 수 있는지는 실측하지 않았다.
-6. **사설 포커스 경로 의존**: `usePreciseFocus`가 꺼져 있거나 SkyLight 심볼이 없으면 공개 `activate()` 폴백만 남는다. 공개 경로는 macOS 14+ 협력적 activation이라 특정 창 승격 보장이 약하다(참조: `docs/acknowledge/private-api.md`).
-7. **프리즈 순간의 프로세스 상태 미확보**: idle sample은 사후 관찰이라 프리즈 시점의 main/renderer/GPU 상태 근거로 쓸 수 없다.
+1. **캡처 완료만큼 포커스가 지연됨**: 실기 5회에서 commit→focus 간격은 2~24ms였지만, ScreenCaptureKit 응답이 비정상적으로 늦으면 포커스도 함께 늦어진다. 프리즈를 재도입하는 timeout 폴백은 두지 않았다.
+2. **occlusion 판정이 OS로 위임된 구조**: orderOut 이후 대상 창의 `NSWindow.occlusionState` 전이는 직접 계측하지 않았다. 별도 occlusion 회귀가 있으면 캡처 경합 제거와 무관하게 재발할 수 있다.
+3. **AX `kAXErrorCannotComplete`는 실패 확정이 아님**: Apple 문서상 이 오류는 "동작 실패"가 아니라 응답 지연일 수 있다. 로그의 `raised=false`만으로 실제 raise 실패를 단정하지 않는다.
+4. **사설 포커스 경로 의존**: `usePreciseFocus`가 꺼져 있거나 SkyLight 심볼이 없으면 공개 `activate()` 폴백만 남는다. 공개 경로는 macOS 14+ 협력적 activation이라 특정 창 승격 보장이 약하다.
 
 ## 확인 불가 항목
 
 - `UpdateWebContentsVisibility(OCCLUDED)` 이후 렌더러가 어떤 조건에서 프레임 갱신을 재개하는지: `content/browser/web_contents/web_contents_impl.cc` 전체를 확인하지 못해 미검증.
 - Chromium 쪽 알려진 이슈 번호, macOS 26 특정 빌드(26.5.2)에서의 회귀 여부: 확인하지 않았다.
-- Indou 변경 전/후의 실기 전환 성공률, WebContents 정지 여부, WindowServer 로그의 churn 감소 여부: 실기 로그 없음.
+- Chromium 내부에서 ScreenCaptureKit 경합이 `Page Unresponsive`와 지속 occlusion으로 이어지는 정확한 호출 스택: Chromium trace를 수집하지 않아 미확인.

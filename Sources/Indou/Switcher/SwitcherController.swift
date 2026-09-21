@@ -337,29 +337,42 @@ final class SwitcherController {
             let index = model.selectedIndex
             let count = model.windows.count
             Log.windows.error("commit: no selected window (index=\(index) count=\(count))")
-            closeSession(commit: true)
+            closeSession(commit: false)
             return
         }
         Log.windows.info("commit focus '\(selected.title)' (\(selected.appName)) wid=\(selected.id)")
         orderCounter += 1
         windowFocusOrder[selected.id] = orderCounter
         lastFocusedWindow = (selected.id, selected.pid)
-        closeSession(commit: true)
-        WindowActions.focus(live, usePrivateFocus: store.settings.advanced.usePreciseFocus)
+        focusAfterClosing(live)
     }
 
-    private func closeSession(commit _: Bool) {
-        guard sessionActive else { return }
+    @discardableResult
+    private func closeSession(commit: Bool) -> [Task<Void, Never>] {
+        guard sessionActive else { return [] }
         sessionActive = false
         persistent = false
         windowsLoaded = false
         pendingCommit = false
         // Invalidate any reload Task still in flight for this session.
         sessionGeneration += 1
-        thumbnails.cancelPendingCaptures()
+        let captures = commit ? thumbnails.capturesToFinishBeforeFocus() : []
+        if !commit { thumbnails.cancelPendingCaptures() }
         panel.dismiss()
         backdrop.dismiss()
         model.multiSelected = []
+        return captures
+    }
+
+    private func focusAfterClosing(_ live: LiveWindow) {
+        let captures = closeSession(commit: true)
+        let focusGeneration = sessionGeneration
+        let usePrivateFocus = store.settings.advanced.usePreciseFocus
+        Task {
+            for capture in captures { await capture.value }
+            guard sessionGeneration == focusGeneration else { return }
+            WindowActions.focus(live, usePrivateFocus: usePrivateFocus)
+        }
     }
 
     // MARK: - Context (mouse) actions
@@ -368,9 +381,8 @@ final class SwitcherController {
         let live = targets.compactMap { liveByID[$0] }
         switch action {
         case .focus:
-            let target = live.first
-            closeSession(commit: true)
-            if let target { WindowActions.focus(target, usePrivateFocus: store.settings.advanced.usePreciseFocus) }
+            guard let target = live.first else { closeSession(commit: false); return }
+            focusAfterClosing(target)
         case .close:
             WindowActions.closeAll(live)
             refreshAfterAction()

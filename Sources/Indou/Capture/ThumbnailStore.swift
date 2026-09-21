@@ -60,12 +60,12 @@ final class ThumbnailStore {
     /// actually finish, so a following session cannot exceed the concurrency
     /// limit while ScreenCaptureKit ignores the cancellation.
     func cancelPendingCaptures() {
-        generation += 1
-        pending.removeAll(keepingCapacity: true)
-        scheduled.removeAll(keepingCapacity: true)
-        for capture in activeTasks.values {
-            capture.task.cancel()
-        }
+        let tasks = invalidatePendingCaptures()
+        for task in tasks { task.cancel() }
+    }
+
+    func capturesToFinishBeforeFocus() -> [Task<Void, Never>] {
+        invalidatePendingCaptures()
     }
 
     func clear() {
@@ -83,6 +83,13 @@ final class ThumbnailStore {
             let task = Task { await self.capture(request, token: token, generation: taskGeneration) }
             activeTasks[token] = ActiveCapture(task: task)
         }
+    }
+
+    private func invalidatePendingCaptures() -> [Task<Void, Never>] {
+        generation += 1
+        pending.removeAll(keepingCapacity: true)
+        scheduled.removeAll(keepingCapacity: true)
+        return activeTasks.values.map(\.task)
     }
 
     private func capture(_ request: CaptureRequest, token: Int, generation taskGeneration: Int) async {
