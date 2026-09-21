@@ -130,6 +130,7 @@ v0.1.7 재검증으로 확인된 직접 오류는 **같은 Chrome 프로세스�
 - Chrome 일반 동적 페이지 `wid=42165` 선택 후 `didPrivate=false`, `raised=true`를 확인했고 5개 연속 WebContents 프레임 해시가 모두 달랐다.
 - active stream 취소 경로의 commit→focus 간격은 19ms였으며 이후 동적 Chrome 창의 3개 연속 프레임 해시가 모두 달랐다.
 - `swift test` 성공: 11 suites의 53 tests 통과. 서명 debug 앱 빌드·codesign 검증 성공.
+- notarized v0.1.9 설치본: Chrome 일반·시크릿 실썸네일 표시와 재호출 200ms 캐시 표시를 확인했다. 일반 동적 페이지 `wid=42165` 포커스 후 5개 연속 프레임 해시가 모두 달랐다.
 
 ## 남은 실기 위험
 

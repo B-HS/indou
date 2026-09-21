@@ -148,7 +148,7 @@ Chrome 일반 창과 시크릿 창이 함께 있을 때 다른 앱에서 ⌘Tab�
 - [x] 포커스 전 active stream 취소·`stopCapture()` 완료 대기와 세션 간 캐시 유지 적용
 - [x] Chromium 일반·시크릿 창 실썸네일과 WebContents 생존을 서명 앱에서 반복 검증 — 첫 호출 점진 표시, 재호출 200ms 캐시 표시, 일반 창 `wid=42165` 5개 연속 프레임 갱신
 - [x] 문서·테스트 갱신 — `swift test` 11 suites·53 tests, 서명 debug 앱 build·codesign 성공
-- [ ] 관련 파일 커밋·push 및 `prod` 정식 릴리스
+- [x] 관련 파일 커밋·push 및 `prod` 정식 릴리스 — `0323af4`, `v0.1.9`, release run `35595054486`
 
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
