@@ -237,7 +237,9 @@ final class SwitcherController {
     }
 
     private func loadWindows(for profile: ShortcutProfile, preserveSelection: Bool, generation: Int) async {
-        await thumbnails.refreshContent()
+        if store.settings.appearance.showThumbnails {
+            await thumbnails.refreshContent()
+        }
         let live = await enumerator.enumerate(includeBackgroundApps: store.settings.general.showBackgroundApps)
 
         liveByID = Dictionary(live.map { ($0.state.id, $0) }, uniquingKeysWith: { a, _ in a })
@@ -293,10 +295,17 @@ final class SwitcherController {
         model.columns = columns
         backdrop.present()
         panel.present(on: screen, size: panelSize)
+        guard store.settings.appearance.showThumbnails else { return }
+        let captureMinimized = store.settings.advanced.captureMinimizedWindows
+        let ids = model.windows
+            .filter { captureMinimized || !$0.isMinimized }
+            .map(\.id)
+        let resolution = min(1.0, max(0.25, store.settings.advanced.thumbnailResolutionScale))
         thumbnails.requestThumbnails(
-            for: model.windows.map(\.id),
+            for: ids,
             pointSize: CGSize(width: cell.width - DS.Spacing.md, height: cell.height - 44),
-            scale: screen.backingScaleFactor
+            scale: screen.backingScaleFactor * CGFloat(resolution),
+            maxConcurrent: store.settings.advanced.maxConcurrentCaptures
         )
     }
 
@@ -324,15 +333,18 @@ final class SwitcherController {
         // loadWindows resolves the selection, mirroring advance()'s pendingSteps
         // buffering, instead of dropping the switch.
         guard windowsLoaded else { pendingCommit = true; return }
-        defer { closeSession(commit: true) }
         guard let selected = model.selectedWindow, let live = liveByID[selected.id] else {
-            Log.windows.error("commit: no selected window (index=\(self.model.selectedIndex) count=\(self.model.windows.count))")
+            let index = model.selectedIndex
+            let count = model.windows.count
+            Log.windows.error("commit: no selected window (index=\(index) count=\(count))")
+            closeSession(commit: true)
             return
         }
         Log.windows.info("commit focus '\(selected.title)' (\(selected.appName)) wid=\(selected.id)")
         orderCounter += 1
         windowFocusOrder[selected.id] = orderCounter
         lastFocusedWindow = (selected.id, selected.pid)
+        closeSession(commit: true)
         WindowActions.focus(live, usePrivateFocus: store.settings.advanced.usePreciseFocus)
     }
 
@@ -344,6 +356,7 @@ final class SwitcherController {
         pendingCommit = false
         // Invalidate any reload Task still in flight for this session.
         sessionGeneration += 1
+        thumbnails.cancelPendingCaptures()
         panel.dismiss()
         backdrop.dismiss()
         model.multiSelected = []
@@ -355,8 +368,9 @@ final class SwitcherController {
         let live = targets.compactMap { liveByID[$0] }
         switch action {
         case .focus:
-            if let first = live.first { WindowActions.focus(first, usePrivateFocus: store.settings.advanced.usePreciseFocus) }
+            let target = live.first
             closeSession(commit: true)
+            if let target { WindowActions.focus(target, usePrivateFocus: store.settings.advanced.usePreciseFocus) }
         case .close:
             WindowActions.closeAll(live)
             refreshAfterAction()

@@ -35,10 +35,13 @@ final class BackdropWindow: NSPanel {
     func present() {
         let union = NSScreen.screens.reduce(CGRect.null) { $0.union($1.frame) }
         setFrame(union.isNull ? (NSScreen.main?.frame ?? .zero) : union, display: false)
+        alphaValue = 0
         orderFrontRegardless()
+        alphaValue = 1
     }
 
     func dismiss() {
+        alphaValue = 0
         orderOut(nil)
     }
 }

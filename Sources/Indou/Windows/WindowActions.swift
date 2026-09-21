@@ -7,6 +7,8 @@ import PrivateWindowServer
 /// the main actor; batch actions group by app so an app is asked to quit once.
 @MainActor
 enum WindowActions {
+    private static let axMessagingTimeoutSeconds: Float = 0.5
+
     static func focus(_ window: LiveWindow, usePrivateFocus: Bool) {
         // App stand-in (no window): just bring the app forward.
         if window.state.isAppEntry {
@@ -14,8 +16,9 @@ enum WindowActions {
             return
         }
         // Restore a minimized window before raising it.
-        if window.state.isMinimized {
-            window.axElement?.setValue(kAXMinimizedAttribute as String, false as CFBoolean)
+        if window.state.isMinimized, let ax = window.axElement {
+            AXUIElementSetMessagingTimeout(ax, axMessagingTimeoutSeconds)
+            AXUIElementSetAttributeValue(ax, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
         }
         PreciseFocus.focus(
             windowID: window.state.id,
