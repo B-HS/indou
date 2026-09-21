@@ -112,6 +112,7 @@ Apple AX 계약:
 - 재현본(v0.1.6): 썸네일 on + 캡처 시작 약 0.4초 뒤 일반 Chrome 창 focus에서 `Page Unresponsive` 재현. 같은 target은 `wid=41340`, private focus와 AX raise는 성공 로그가 남았다.
 - 음성 대조(v0.1.6): 썸네일 off에서 같은 창의 프레임 해시가 연속 변경됐고 `Page Unresponsive`가 없었다.
 - 수정본: 서명된 `.build/Indou.app`에서 썸네일 on 상태로 같은 일반/시크릿 창 전환을 5회 연속 실행했다. 5회 모두 target `wid=41340` 포커스 성공, `Page Unresponsive` 0회, 최종 프레임 해시 연속 변경을 확인했다.
+- 배포본: notarized `v0.1.7` 자산의 SHA-256과 서명을 검증해 설치한 뒤 같은 일반/시크릿 창 전환에서 target `wid=41340` 포커스 성공, `Page Unresponsive` 0회, 3개 연속 프레임 해시 변경을 확인했다.
 - `git diff --check && swift build` 성공: exit 0, `Build complete! (2.25s)`.
 - `swift test` 성공: exit 0, 10 suites의 50 tests 통과.
 

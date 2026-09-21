@@ -128,7 +128,7 @@ Chrome 일반 창과 시크릿 창이 함께 있을 때 다른 앱에서 ⌘Tab�
 - [x] 확정 트리거를 제거하되 일반/시크릿 다중 창 선택과 썸네일 표시 동작을 보존 — active 캡처 자연 종료 후 focus
 - [x] 확정 재현 절차·원인·수정 결과를 버그 문서에 갱신 — `docs/bug/0005-chromium-webcontents-freeze.md`
 - [x] 위험 비례 검증 완료 — `swift build`, `swift test` 50개, 서명 debug 앱 실기 5회 연속 통과
-- [ ] 관련 파일만 커밋·`dev` push 후 `prod` 릴리스
+- [x] 관련 파일만 커밋·`dev` push 후 `prod` 릴리스 — `440ab37`, `v0.1.7`, release run `35588681347`
 
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
