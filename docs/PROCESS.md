@@ -112,6 +112,15 @@ Force Quit 처럼 창 없는 regular 앱도 표시하는 토글. 상세 `docs/hi
 - [x] 단일/다중 선택 모드 토글(`input.multiSelectEnabled`, 기본 단일) + Input 페인 토글
 - [x] `swift build` + `swift test`(50) 통과
 
+## M9 — Chromium WebContents 프리즈 완화 (2026-09-21)
+Chrome·Codex 전환 시 네이티브 UI는 반응하지만 WebContents가 멈추는 문제를 포커스·오버레이·캡처 경로에서 수정한다.
+기준: `docs/bug/0002-focus-activation.md`, `docs/bug/0004-audit-2026-06-26.md`, `docs/acknowledge/private-api.md`, Chromium 153 macOS occlusion 경로와 Apple AX 계약.
+- [x] 원인 범위 확정 — focus 후 overlay orderOut, 중복 AX main/raise, 창 AX timeout 부재, 무제한·취소 불가 캡처 확인
+- [x] 오버레이를 먼저 내린 뒤 포커스하고 private focus의 AX 호출·반환 처리를 최소화
+- [x] 썸네일 표시·해상도·최소화 설정과 동시성 상한·세션 취소를 실제 캡처 경로에 적용
+- [x] 버그 해결 문서와 필요한 회귀 검증 경계를 갱신 — `docs/bug/0005-chromium-webcontents-freeze.md`
+- [x] 독립 검증(`swift build`, `swift test` 50개) 후 관련 파일만 커밋·`dev` push — `4b63277`
+
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
 - 단위 테스트 실 작성 전 사용자에게 범위 재확인(컨벤션).
