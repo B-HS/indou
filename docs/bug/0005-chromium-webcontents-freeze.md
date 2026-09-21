@@ -105,7 +105,7 @@ v0.1.7 재검증으로 확인된 직접 오류는 **같은 Chrome 프로세스�
 - 패널 표시 150ms 뒤 캡처를 시작해 첫 호출의 열거·렌더 경로와 캡처 부하를 분리한다.
 - `SCStream` 하나만 실행하고 `queueDepth = 1`로 첫 `.complete` 프레임을 받은 뒤 즉시 `stopCapture()` 완료를 기다린다. 프레임이 없으면 1초 후 종료한다.
 - 취소·commit 모두 active task를 취소한다. 프레임 대기를 깨운 뒤 `stopCapture()`가 끝나야 task가 완료되므로 포커스와 캡처가 겹치지 않는다.
-- 이미지 캐시는 세션 사이에 유지한다. 같은 window id라도 PID·제목·프레임이 바뀌면 폐기해 재사용된 id나 크기 변경의 stale 이미지를 차단한다.
+- 이미지 캐시는 세션 사이에 즉시 표시하되 패널 표시 150ms 뒤 직렬로 다시 캡처해 갱신한다. 같은 window id라도 PID·제목·프레임·출력 크기가 바뀌면 기존 이미지를 먼저 폐기한다.
 - 세션 generation이 다르면 늦게 끝난 task의 이미지를 저장하지 않는다.
 
 ### `Sources/Indou/Windows/WindowEnumerator.swift`
@@ -131,10 +131,11 @@ v0.1.7 재검증으로 확인된 직접 오류는 **같은 Chrome 프로세스�
 - active stream 취소 경로의 commit→focus 간격은 19ms였으며 이후 동적 Chrome 창의 3개 연속 프레임 해시가 모두 달랐다.
 - `swift test` 성공: 11 suites의 53 tests 통과. 서명 debug 앱 빌드·codesign 검증 성공.
 - notarized v0.1.9 설치본: Chrome 일반·시크릿 실썸네일 표시와 재호출 200ms 캐시 표시를 확인했다. 일반 동적 페이지 `wid=42165` 포커스 후 5개 연속 프레임 해시가 모두 달랐다.
+- stale-while-revalidate 수정본: 두 번째 호출 200ms에는 캐시를 즉시 표시했고, 1.2초 시점에는 iTerm 등 내용이 바뀐 창의 새 프레임으로 교체됨을 확인했다. `swift build`와 서명 debug 앱 codesign 검증이 성공했다.
 
 ## 남은 실기 위험
 
-1. **정적 캐시**: 같은 PID·제목·프레임의 창은 다음 세션에서 이전 프레임을 즉시 표시한다. 제목이나 크기가 바뀌면 자동 재캡처하지만 내용만 바뀐 경우에는 앱 재시작 전까지 이전 프레임을 유지한다.
+1. **stale-while-revalidate 캐시**: 재호출 직후에는 이전 프레임을 즉시 표시하고 150ms 뒤 최신 프레임으로 교체한다. 150ms보다 짧은 빠른 전환에서는 이전 프레임만 볼 수 있다.
 2. **공개 AX 경로 의존**: macOS가 `kAXRaise`를 거부하면 특정 Chromium 창 승격이 실패할 수 있다. 로그의 `raised=false`로 식별한다.
 3. **occlusion 판정이 OS로 위임된 구조**: 별도 macOS occlusion 회귀가 있으면 이번 캡처·key window 수정과 무관하게 재발할 수 있다.
 

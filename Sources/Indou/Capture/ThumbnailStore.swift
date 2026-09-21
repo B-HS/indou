@@ -118,9 +118,10 @@ final class ThumbnailStore {
         for id in ids {
             guard let window = scWindows[id] else { continue }
             let fingerprint = Self.fingerprint(for: window)
-            if images[id]?.size == pixelSize, fingerprints[id] == fingerprint { continue }
-            images.removeValue(forKey: id)
-            fingerprints.removeValue(forKey: id)
+            if images[id]?.size != pixelSize || fingerprints[id] != fingerprint {
+                images.removeValue(forKey: id)
+                fingerprints.removeValue(forKey: id)
+            }
             guard !scheduled.contains(id) else { continue }
             scheduled.insert(id)
             pending.append(

@@ -54,7 +54,7 @@ scripts/ setup-dev-identity.sh / build-app.sh / reset-permissions.sh
 | 항목 | 설계안 | 실제 구현 |
 |------|--------|-----------|
 | 이벤트 탭 스레드 | 전용 백그라운드 runLoop 스레드 | **메인 런루프**(`CFRunLoopGetMain`) 부착. 콜백이 동기 swallow 결정을 위해 `MainActor.assumeIsolated` 사용 → 메인 스레드 필요. (백그라운드 이전은 동기 반환 설계를 깨므로 미채택) |
-| 썸네일 캡처 | off-main `OperationQueue`(maxConcurrent≈8) | 패널 표시 150ms 뒤 직렬 `SCStream`으로 첫 완성 프레임만 받고 `stopCapture()` 완료. 열거의 `SCWindow` 재사용 + 세션 간 fingerprint 캐시 |
+| 썸네일 캡처 | off-main `OperationQueue`(maxConcurrent≈8) | 세션 간 fingerprint 캐시를 즉시 표시하고 150ms 뒤 직렬 `SCStream`으로 갱신. 첫 완성 프레임 뒤 `stopCapture()` 완료, 열거의 `SCWindow` 재사용 |
 | AX 열거 | — | 감사 전 메인 스레드 동기 블로킹 → **2026-06-26 `nonisolated static async` 로 off-main 이동** |
 | 다중선택 상태 | `SelectionState`(IndouKit) | 라이브 앱은 `SwitcherViewModel` 의 `selectedIndex`/`multiSelected` 직접 사용. `SelectionState` 는 현재 테스트 전용(미연결) |
 
