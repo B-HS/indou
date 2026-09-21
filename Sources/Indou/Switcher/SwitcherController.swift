@@ -299,6 +299,7 @@ final class SwitcherController {
         let captureMinimized = store.settings.advanced.captureMinimizedWindows
         let ids = model.windows
             .filter { captureMinimized || !$0.isMinimized }
+            .filter { !ChromiumCompatibility.requiresConservativeWindowHandling($0.appBundleID) }
             .map(\.id)
         let resolution = min(1.0, max(0.25, store.settings.advanced.thumbnailResolutionScale))
         thumbnails.requestThumbnails(

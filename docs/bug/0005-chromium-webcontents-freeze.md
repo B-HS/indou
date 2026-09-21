@@ -52,12 +52,13 @@ Apple AX 계약:
 
 ## 원인 판정
 
-실기 A/B로 확인된 직접 트리거는 **진행 중인 ScreenCaptureKit 캡처와 Chromium 창 전면화의 중첩**이다.
+v0.1.7 재검증으로 확인된 직접 오류는 **같은 Chrome 프로세스의 일반 창과 시크릿 창 사이에서 private make-key가 성공을 반환하고도 다른 창을 전면에 남기는 것**이다.
 
-1. v0.1.6에서 썸네일을 끄고 같은 private focus·AX raise 경로로 일반 Chrome 창을 선택하면 동적 콘텐츠가 계속 갱신되고 `Page Unresponsive`가 생기지 않았다.
-2. 썸네일을 켠 뒤 스위처를 열고 약 0.4초 안에 같은 창을 선택하자 target `wid=41340` 포커스 직후 `Page Unresponsive`가 재현됐다. 취소된 `Task`가 ScreenCaptureKit 작업의 종료까지 보장하지 않으므로 `cancelPendingCaptures()`만으로는 캡처와 포커스의 중첩을 막지 못했다.
-3. 수정본은 커밋 시 신규 캡처를 폐기하되 실행 중 캡처를 취소하지 않고 완료까지 기다린 다음 포커스한다. 같은 조건을 5회 연속 반복해 모두 target `wid=41340`, `didPrivate=true`, `raised=true`였고 `Page Unresponsive`는 0회였다.
-4. private focus와 AX raise는 썸네일 on/off A/B에서 동일했으므로 단독 직접 트리거에서는 제외했다. Chromium의 macOS 26 occlusion 경로는 프레임 정지가 지속되는 메커니즘과 정합하지만, 이번 실기로 내부 occlusion 상태 전이 자체를 계측한 것은 아니다.
+1. Chrome에서 실제 `⌘⇧N`으로 시크릿 창을 열고 다른 앱으로 이동한 뒤 일반 동영상 창 `wid=41896`을 선택했다.
+2. private focus를 유지한 대조군은 10회 모두 로그상 `wid=41896`, `didPrivate=true`였지만 화면은 일반 창과 시크릿 창이 번갈아 남았다. 5회는 시크릿 창의 정적 WebContents가 그대로 보여 프리즈로 관찰됐다.
+3. 같은 target에서 Chromium만 private focus를 끄고 `kAXFrontmost` + `kAXRaise` + public activate를 사용하자 10회 모두 `wid=41896`, `didPrivate=false`, `raised=true`였고 일반 창의 WebContents 영역이 계속 갱신됐다.
+4. v0.1.7의 캡처 대기 수정은 이 잘못된 key window 선택을 해결하지 못했다. 이전 썸네일 on/off 비교는 목표 창 확인이 일관되지 않아 직접 원인 판정 근거로 사용할 수 없다.
+5. ScreenCaptureKit은 Chromium 전환 시 WindowServer 경합을 늘릴 수 있으므로 Chrome·Codex 썸네일 캡처도 함께 제외한다. 다른 앱의 썸네일은 유지한다.
 
 ## 수정 파일과 동작 (현재 코드 확인)
 
@@ -71,6 +72,7 @@ Apple AX 계약:
 - `loadWindows`: `store.settings.appearance.showThumbnails`가 false면 `thumbnails.refreshContent()`(SCShareableContent 조회)를 아예 호출하지 않는다.
 - `layoutAndPresent`: `guard store.settings.appearance.showThumbnails else { return }`로 캡처 요청을 건너뛴다. true일 때만
   - 최소화 필터: `captureMinimized || !$0.isMinimized` (설정 `advanced.captureMinimizedWindows`가 false면 최소화 창 제외)
+  - Chromium 제외: `ChromiumCompatibility.requiresConservativeWindowHandling`이 true인 Chrome·Codex는 캡처 요청에서 제외하고 앱 아이콘 placeholder 유지
   - 해상도: `min(1.0, max(0.25, settings.advanced.thumbnailResolutionScale))`를 `screen.backingScaleFactor`에 곱해 전달
   - 동시성: `settings.advanced.maxConcurrentCaptures` 전달
 
@@ -85,12 +87,14 @@ Apple AX 계약:
 - `axMessagingTimeoutSeconds = 0.5`. 앱 요소와 창 요소 각각에 `AXUIElementSetMessagingTimeout`을 적용한다.
 - `raise(_:)`는 창 요소에 timeout 0.5s를 설정하고 `kAXRaise`를 **1회** 수행한 뒤 `== .success` 반환값을 그대로 돌려준다. 현재 코드에서 `kAXMain` 호출은 사용되지 않는다(저장소 전체에서 `kAXMain`/`AXMain`은 `docs/memory/research-raw.json`의 조사 기록에만 등장).
 - `focus(...)`: private 경로면 `setFrontProcessWithOptions` 성공 + `postMakeKey`의 **두 번 post 반환을 모두 검사**해 성공 여부를 판단한다. 실패하면 공개 경로(`kAXFrontmost` 설정 → `raise` → `NSRunningApplication.activate()`)로 폴백한다.
+- Chrome·Codex는 `WindowActions.focus`에서 `usePrivate=false`로 전달하므로 이 private 경로에 진입하지 않는다.
 - private 성공 판정은 심볼 부재 시 실패로 처리되어 공개 폴백으로 내려간다(graceful degradation 유지).
 - 현재 코드에서 `kAXFrontmost` 설정 반환값은 검사하지 않는다(로그에도 반영하지 않음).
 
 ### `Sources/Indou/Windows/WindowActions.swift`
 
 - `axMessagingTimeoutSeconds = 0.5`. 최소화 창 복원 시 창 AX 요소에 timeout을 설정한 뒤 `kAXMinimized = false`를 설정한다.
+- Chrome·Codex는 사용자 설정의 precise focus가 켜져 있어도 private focus를 우회한다. 그 외 앱은 기존 설정과 동작을 유지한다.
 
 ### `Sources/Indou/Capture/ThumbnailStore.swift`
 
@@ -109,22 +113,20 @@ Apple AX 계약:
 
 ## 검증
 
-- 재현본(v0.1.6): 썸네일 on + 캡처 시작 약 0.4초 뒤 일반 Chrome 창 focus에서 `Page Unresponsive` 재현. 같은 target은 `wid=41340`, private focus와 AX raise는 성공 로그가 남았다.
-- 음성 대조(v0.1.6): 썸네일 off에서 같은 창의 프레임 해시가 연속 변경됐고 `Page Unresponsive`가 없었다.
-- 수정본: 서명된 `.build/Indou.app`에서 썸네일 on 상태로 같은 일반/시크릿 창 전환을 5회 연속 실행했다. 5회 모두 target `wid=41340` 포커스 성공, `Page Unresponsive` 0회, 최종 프레임 해시 연속 변경을 확인했다.
-- 배포본: notarized `v0.1.7` 자산의 SHA-256과 서명을 검증해 설치한 뒤 같은 일반/시크릿 창 전환에서 target `wid=41340` 포커스 성공, `Page Unresponsive` 0회, 3개 연속 프레임 해시 변경을 확인했다.
-- `git diff --check && swift build` 성공: exit 0, `Build complete! (2.25s)`.
-- `swift test` 성공: exit 0, 10 suites의 50 tests 통과.
+- v0.1.7은 사용자 실기에서 재발했으며 해결 완료 판정을 폐기했다.
+- 실패 대조군: 실제 `⌘⇧N` 시크릿 창 + 일반 동영상 창 target `wid=41896` + private focus에서 10회 중 5회 다른 시크릿 창이 전면에 남았다.
+- 수정본: 같은 두 창과 target `wid=41896`에서 Chromium public AX focus를 10회 반복했다. 10회 모두 일반 창이 전면에 왔고 WebContents crop의 연속 프레임 해시가 달랐다.
+- 스위처 화면에서 Chrome 일반·시크릿 창은 썸네일 대신 앱 아이콘을 표시하고, iTerm·Finder 등 비-Chromium 창은 기존 썸네일을 유지함을 확인했다.
+- `swift build` 성공, `swift test` 11 suites의 52 tests 통과.
 
 ## 남은 실기 위험
 
-1. **캡처 완료만큼 포커스가 지연됨**: 실기 5회에서 commit→focus 간격은 2~24ms였지만, ScreenCaptureKit 응답이 비정상적으로 늦으면 포커스도 함께 늦어진다. 프리즈를 재도입하는 timeout 폴백은 두지 않았다.
-2. **occlusion 판정이 OS로 위임된 구조**: orderOut 이후 대상 창의 `NSWindow.occlusionState` 전이는 직접 계측하지 않았다. 별도 occlusion 회귀가 있으면 캡처 경합 제거와 무관하게 재발할 수 있다.
-3. **AX `kAXErrorCannotComplete`는 실패 확정이 아님**: Apple 문서상 이 오류는 "동작 실패"가 아니라 응답 지연일 수 있다. 로그의 `raised=false`만으로 실제 raise 실패를 단정하지 않는다.
-4. **사설 포커스 경로 의존**: `usePreciseFocus`가 꺼져 있거나 SkyLight 심볼이 없으면 공개 `activate()` 폴백만 남는다. 공개 경로는 macOS 14+ 협력적 activation이라 특정 창 승격 보장이 약하다.
+1. **Chromium 썸네일 비활성화**: Chrome·Codex는 프리즈 안전성을 위해 앱 아이콘만 표시한다.
+2. **공개 AX 경로 의존**: macOS가 `kAXRaise`를 거부하면 특정 Chromium 창 승격이 실패할 수 있다. 로그의 `raised=false`로 식별한다.
+3. **occlusion 판정이 OS로 위임된 구조**: 별도 macOS occlusion 회귀가 있으면 이번 key window 수정과 무관하게 재발할 수 있다.
 
 ## 확인 불가 항목
 
 - `UpdateWebContentsVisibility(OCCLUDED)` 이후 렌더러가 어떤 조건에서 프레임 갱신을 재개하는지: `content/browser/web_contents/web_contents_impl.cc` 전체를 확인하지 못해 미검증.
 - Chromium 쪽 알려진 이슈 번호, macOS 26 특정 빌드(26.5.2)에서의 회귀 여부: 확인하지 않았다.
-- Chromium 내부에서 ScreenCaptureKit 경합이 `Page Unresponsive`와 지속 occlusion으로 이어지는 정확한 호출 스택: Chromium trace를 수집하지 않아 미확인.
+- private make-key가 성공을 반환하고도 Chrome의 다른 privacy-mode 창을 남기는 내부 SkyLight/Chromium 호출 스택은 미확인이다.

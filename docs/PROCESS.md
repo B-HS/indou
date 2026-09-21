@@ -130,6 +130,16 @@ Chrome 일반 창과 시크릿 창이 함께 있을 때 다른 앱에서 ⌘Tab�
 - [x] 위험 비례 검증 완료 — `swift build`, `swift test` 50개, 서명 debug 앱 실기 5회 연속 통과
 - [x] 관련 파일만 커밋·`dev` push 후 `prod` 릴리스 — `440ab37`, `v0.1.7`, release run `35588681347`
 
+## M11 — v0.1.7 프리즈 재수정 (2026-09-21)
+사용자 실기에서 v0.1.7 프리즈가 지속됐으므로 M10의 완료 판정을 폐기하고 정확한 선택 창 확인을 포함해 재검증한다.
+- [x] 기존 검증 오류 확인 — 자동 키 입력이 일부 누락돼 일반 Chrome 창 대신 시크릿 창을 선택한 실행을 성공으로 오판
+- [x] Chromium 캡처 경로 완전 분리 — Chrome·Codex는 아이콘 placeholder를 유지하고 ScreenCaptureKit 요청에서 제외
+- [x] private focus 직접 오류 재현 — 같은 target `wid=41896` 성공 로그에서 일반/시크릿 창이 번갈아 전면에 남음
+- [x] Chromium private focus 우회 — Chrome·Codex는 `kAXFrontmost` + `kAXRaise` + public activate 경로 사용
+- [x] 서명 debug 앱에서 실제 선택 카드·target wid·WebContents 반응을 함께 검증 — public AX 대조군 10/10 target `wid=41896`, 연속 프레임 갱신
+- [x] 문서 갱신과 테스트 완료 — `swift build`, `swift test` 11 suites·52 tests
+- [ ] 관련 파일 커밋·push 후 `prod` 릴리스
+
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
 - 단위 테스트 실 작성 전 사용자에게 범위 재확인(컨벤션).
