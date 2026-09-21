@@ -38,6 +38,13 @@ struct SettingsSchemaTests {
         let s = try SettingsCodec.decode(json)
         #expect(!s.profiles.isEmpty)
     }
+
+    @Test("이전 동시 캡처 설정은 무시하고 로드한다")
+    func legacyConcurrentCaptureSettingIsIgnored() throws {
+        let json = #"{"advanced":{"maxConcurrentCaptures":8}}"#.data(using: .utf8)!
+        let settings = try SettingsCodec.decode(json)
+        #expect(settings.advanced == AdvancedSettings())
+    }
 }
 
 @Suite("ShortcutMatcher")

@@ -3,15 +3,15 @@ import Testing
 
 @Suite("ChromiumCompatibility")
 struct ChromiumCompatibilityTests {
-    @Test("Chrome과 Codex는 보수적 창 처리를 사용한다")
+    @Test("Chrome과 Codex는 공개 창 포커스를 사용한다")
     func affectedApps() {
-        #expect(ChromiumCompatibility.requiresConservativeWindowHandling("com.google.Chrome"))
-        #expect(ChromiumCompatibility.requiresConservativeWindowHandling("com.openai.codex"))
+        #expect(ChromiumCompatibility.requiresPublicWindowFocus("com.google.Chrome"))
+        #expect(ChromiumCompatibility.requiresPublicWindowFocus("com.openai.codex"))
     }
 
     @Test("다른 앱과 nil은 기존 창 처리를 유지한다")
     func unaffectedApps() {
-        #expect(!ChromiumCompatibility.requiresConservativeWindowHandling("com.apple.Safari"))
-        #expect(!ChromiumCompatibility.requiresConservativeWindowHandling(nil))
+        #expect(!ChromiumCompatibility.requiresPublicWindowFocus("com.apple.Safari"))
+        #expect(!ChromiumCompatibility.requiresPublicWindowFocus(nil))
     }
 }

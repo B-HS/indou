@@ -20,12 +20,15 @@ final class WindowEnumerator {
     private let ownPID = ProcessInfo.processInfo.processIdentifier
     private var creationOrder: [WindowID: Int] = [:]
     private var nextCreation = 0
+    private(set) var shareableWindows: [WindowID: SCWindow] = [:]
 
     func enumerate(includeBackgroundApps: Bool) async -> [LiveWindow] {
-        let scWindows = await fetchShareableWindows()
         let apps = runningRegularApps()
-        let axByWindowID = await Self.collectAccessibilityWindows(apps: apps)
-        let scByID = Dictionary(scWindows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
+        async let scWindowsRequest = Self.fetchShareableWindows()
+        async let accessibilityRequest = Self.collectAccessibilityWindows(apps: apps)
+        let (scWindows, axByWindowID) = await (scWindowsRequest, accessibilityRequest)
+        shareableWindows = Dictionary(scWindows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
+        let scByID = shareableWindows
         let pidsWithStandardWindow = Set(axByWindowID.values.filter { $0.isStandardWindow == true }.map(\.pid))
 
         var merged: [WindowID: LiveWindow] = [:]
@@ -119,7 +122,7 @@ final class WindowEnumerator {
         return nextCreation
     }
 
-    private func fetchShareableWindows() async -> [SCWindow] {
+    nonisolated private static func fetchShareableWindows() async -> [SCWindow] {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             return content.windows

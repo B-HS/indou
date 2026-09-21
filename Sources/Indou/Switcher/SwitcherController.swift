@@ -225,22 +225,24 @@ final class SwitcherController {
         pendingSteps = reverse ? -1 : 1
         activeProfile = profile
         // Drop the previous session's snapshot so a pre-load commit can never act on
-        // a stale window / dead AX element, and so thumbnails are re-captured fresh.
+        // a stale window / dead AX element.
         model.windows = []
         model.selectedIndex = 0
         liveByID = [:]
         model.multiSelected = []
         model.searchQuery = ""
-        thumbnails.clear()
+        thumbnails.cancelPendingCaptures()
 
         Task { await loadWindows(for: profile, preserveSelection: false, generation: generation) }
     }
 
     private func loadWindows(for profile: ShortcutProfile, preserveSelection: Bool, generation: Int) async {
-        if store.settings.appearance.showThumbnails {
-            await thumbnails.refreshContent()
-        }
         let live = await enumerator.enumerate(includeBackgroundApps: store.settings.general.showBackgroundApps)
+
+        guard sessionActive, generation == sessionGeneration else { return }
+        if store.settings.appearance.showThumbnails {
+            thumbnails.updateContent(enumerator.shareableWindows, keeping: Set(live.map { $0.state.id }))
+        }
 
         liveByID = Dictionary(live.map { ($0.state.id, $0) }, uniquingKeysWith: { a, _ in a })
         IconProvider.shared.prune(keeping: Set(live.map { $0.state.pid }))
@@ -253,9 +255,6 @@ final class SwitcherController {
         )
         let matcher = ExceptionMatcher(rules: store.settings.exceptions)
         let filtered = resolver.resolve(windows: ranked, criteria: profile.filter, context: context, matcher: matcher)
-
-        // Bail if the session ended or a newer one started while we were awaiting.
-        guard sessionActive, generation == sessionGeneration else { return }
 
         model.appearance = store.settings.appearance
         model.animationEnabled = store.settings.animation.enabled && !reduceMotionActive()
@@ -297,16 +296,21 @@ final class SwitcherController {
         panel.present(on: screen, size: panelSize)
         guard store.settings.appearance.showThumbnails else { return }
         let captureMinimized = store.settings.advanced.captureMinimizedWindows
-        let ids = model.windows
+        let captureIDs = model.windows
             .filter { captureMinimized || !$0.isMinimized }
-            .filter { !ChromiumCompatibility.requiresConservativeWindowHandling($0.appBundleID) }
             .map(\.id)
+        let selectedID = model.selectedWindow?.id
+        let ids: [WindowID]
+        if let selectedID, captureIDs.contains(selectedID) {
+            ids = [selectedID] + captureIDs.filter { $0 != selectedID }
+        } else {
+            ids = captureIDs
+        }
         let resolution = min(1.0, max(0.25, store.settings.advanced.thumbnailResolutionScale))
         thumbnails.requestThumbnails(
             for: ids,
             pointSize: CGSize(width: cell.width - DS.Spacing.md, height: cell.height - 44),
-            scale: screen.backingScaleFactor * CGFloat(resolution),
-            maxConcurrent: store.settings.advanced.maxConcurrentCaptures
+            scale: screen.backingScaleFactor * CGFloat(resolution)
         )
     }
 

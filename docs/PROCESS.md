@@ -140,6 +140,16 @@ Chrome 일반 창과 시크릿 창이 함께 있을 때 다른 앱에서 ⌘Tab�
 - [x] 문서 갱신과 테스트 완료 — `swift build`, `swift test` 11 suites·52 tests
 - [x] 관련 파일 커밋·push 후 `prod` 릴리스 — `ac01da0`, `v0.1.8`, release run `35591158268`
 
+## M12 — Chromium 실썸네일 안전 복구 (2026-09-21)
+기존 `SCScreenshotManager` 일회성 동시 캡처를 재사용하지 않고, 첫 표시 지연과 Chromium 포커스 경합을 피하는 단일 프레임 스트림 파이프라인으로 교체한다.
+기준: Apple `SCStream`, `SCStreamOutput`, `SCStream.stopCapture()` 계약과 `docs/bug/0005-chromium-webcontents-freeze.md`의 v0.1.8 public AX focus 결정.
+- [x] 현재 열거·캡처 병목과 공식 API 계약 확인 — 세션당 `SCShareableContent` 중복 조회, 최대 8개 동시 캡처, 매 세션 캐시 삭제 확인
+- [x] 열거 결과를 캡처에 재사용하고 화면 표시 뒤 직렬 `SCStream` 단일 프레임 캡처 적용
+- [x] 포커스 전 active stream 취소·`stopCapture()` 완료 대기와 세션 간 캐시 유지 적용
+- [x] Chromium 일반·시크릿 창 실썸네일과 WebContents 생존을 서명 앱에서 반복 검증 — 첫 호출 점진 표시, 재호출 200ms 캐시 표시, 일반 창 `wid=42165` 5개 연속 프레임 갱신
+- [x] 문서·테스트 갱신 — `swift test` 11 suites·53 tests, 서명 debug 앱 build·codesign 성공
+- [ ] 관련 파일 커밋·push 및 `prod` 정식 릴리스
+
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).
 - 단위 테스트 실 작성 전 사용자에게 범위 재확인(컨벤션).

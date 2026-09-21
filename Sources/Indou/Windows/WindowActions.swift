@@ -24,7 +24,7 @@ enum WindowActions {
             windowID: window.state.id,
             pid: window.state.pid,
             axWindow: window.axElement,
-            usePrivate: usePrivateFocus && !ChromiumCompatibility.requiresConservativeWindowHandling(window.state.appBundleID)
+            usePrivate: usePrivateFocus && !ChromiumCompatibility.requiresPublicWindowFocus(window.state.appBundleID)
         )
     }
 

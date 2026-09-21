@@ -110,7 +110,6 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
     public var disableNativeCmdTab: Bool = false
     public var captureMinimizedWindows: Bool = false
     public var thumbnailResolutionScale: Double = 1.0
-    public var maxConcurrentCaptures: Int = 8
 
     public init() {}
 
@@ -122,7 +121,6 @@ public struct AdvancedSettings: Codable, Sendable, Equatable {
         d.disableNativeCmdTab = try c.decodeIfPresent(Bool.self, forKey: .disableNativeCmdTab) ?? d.disableNativeCmdTab
         d.captureMinimizedWindows = try c.decodeIfPresent(Bool.self, forKey: .captureMinimizedWindows) ?? d.captureMinimizedWindows
         d.thumbnailResolutionScale = try c.decodeIfPresent(Double.self, forKey: .thumbnailResolutionScale) ?? d.thumbnailResolutionScale
-        d.maxConcurrentCaptures = try c.decodeIfPresent(Int.self, forKey: .maxConcurrentCaptures) ?? d.maxConcurrentCaptures
         self = d
     }
 }

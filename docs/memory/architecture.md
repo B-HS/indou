@@ -54,14 +54,14 @@ scripts/ setup-dev-identity.sh / build-app.sh / reset-permissions.sh
 | 항목 | 설계안 | 실제 구현 |
 |------|--------|-----------|
 | 이벤트 탭 스레드 | 전용 백그라운드 runLoop 스레드 | **메인 런루프**(`CFRunLoopGetMain`) 부착. 콜백이 동기 swallow 결정을 위해 `MainActor.assumeIsolated` 사용 → 메인 스레드 필요. (백그라운드 이전은 동기 반환 설계를 깨므로 미채택) |
-| 썸네일 캡처 | off-main `OperationQueue`(maxConcurrent≈8) | 창당 `Task { await capture }`(동시성 상한 없음). `SCScreenshotManager` 자체 스레딩에 위임 |
+| 썸네일 캡처 | off-main `OperationQueue`(maxConcurrent≈8) | 패널 표시 150ms 뒤 직렬 `SCStream`으로 첫 완성 프레임만 받고 `stopCapture()` 완료. 열거의 `SCWindow` 재사용 + 세션 간 fingerprint 캐시 |
 | AX 열거 | — | 감사 전 메인 스레드 동기 블로킹 → **2026-06-26 `nonisolated static async` 로 off-main 이동** |
 | 다중선택 상태 | `SelectionState`(IndouKit) | 라이브 앱은 `SwitcherViewModel` 의 `selectedIndex`/`multiSelected` 직접 사용. `SelectionState` 는 현재 테스트 전용(미연결) |
 
 ### 2026-06-26 감사 수정 (코어 루프 5건)
 - **소환 선택 시작점**: `openSession` 이 index 0(현재 창)에서 시작 → `pendingSteps = reverse ? -1 : 1` 로 변경(forward=직전 창, reverse=마지막 창). 단일 ⌥Tab 전환 + ⌥⇧Tab 역방향 복구.
 - **릴리즈 경쟁**: 로드 전 모디파이어 릴리즈 시 `commit()` 이 no-op/stale → `pendingCommit` 보류 + 세션 시작 시 직전 스냅샷 초기화.
-- **썸네일 캐시**: `ThumbnailStore.clear()` 를 세션 시작에 연결(무한 증가 + stale 프리뷰 차단).
+- **썸네일 캐시**: 2026-06-26에는 세션마다 `ThumbnailStore.clear()`를 호출했으나, 2026-09-21부터 살아 있는 window id와 PID·제목·프레임이 같은 캐시만 세션 사이에 유지한다.
 - **AX off-main**: 위 표 참조.
 
 ### 2026-06-26 감사 수정 (추가 6건, E~J)
