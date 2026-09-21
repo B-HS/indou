@@ -138,7 +138,7 @@ Chrome 일반 창과 시크릿 창이 함께 있을 때 다른 앱에서 ⌘Tab�
 - [x] Chromium private focus 우회 — Chrome·Codex는 `kAXFrontmost` + `kAXRaise` + public activate 경로 사용
 - [x] 서명 debug 앱에서 실제 선택 카드·target wid·WebContents 반응을 함께 검증 — public AX 대조군 10/10 target `wid=41896`, 연속 프레임 갱신
 - [x] 문서 갱신과 테스트 완료 — `swift build`, `swift test` 11 suites·52 tests
-- [ ] 관련 파일 커밋·push 후 `prod` 릴리스
+- [x] 관련 파일 커밋·push 후 `prod` 릴리스 — `ac01da0`, `v0.1.8`, release run `35591158268`
 
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).

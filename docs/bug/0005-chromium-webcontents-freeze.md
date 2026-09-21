@@ -116,6 +116,7 @@ v0.1.7 재검증으로 확인된 직접 오류는 **같은 Chrome 프로세스�
 - v0.1.7은 사용자 실기에서 재발했으며 해결 완료 판정을 폐기했다.
 - 실패 대조군: 실제 `⌘⇧N` 시크릿 창 + 일반 동영상 창 target `wid=41896` + private focus에서 10회 중 5회 다른 시크릿 창이 전면에 남았다.
 - 수정본: 같은 두 창과 target `wid=41896`에서 Chromium public AX focus를 10회 반복했다. 10회 모두 일반 창이 전면에 왔고 WebContents crop의 연속 프레임 해시가 달랐다.
+- notarized v0.1.8 설치본: 같은 target과 전환을 5회 반복해 모두 `didPrivate=false`, `raised=true`, 연속 프레임 갱신을 확인했다.
 - 스위처 화면에서 Chrome 일반·시크릿 창은 썸네일 대신 앱 아이콘을 표시하고, iTerm·Finder 등 비-Chromium 창은 기존 썸네일을 유지함을 확인했다.
 - `swift build` 성공, `swift test` 11 suites의 52 tests 통과.
 
