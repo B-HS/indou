@@ -150,7 +150,7 @@ Chrome 일반 창과 시크릿 창이 함께 있을 때 다른 앱에서 ⌘Tab�
 - [x] 문서·테스트 갱신 — `swift test` 11 suites·53 tests, 서명 debug 앱 build·codesign 성공
 - [x] 1차 관련 파일 커밋·push 및 `prod` 릴리스 — `0323af4`, `v0.1.9`, release run `35595054486`
 - [x] 캐시 즉시 표시 뒤 150ms 직렬 재캡처로 내용 최신성 보완
-- [ ] 최종 커밋·push 및 `prod` 정식 릴리스
+- [x] 최종 커밋·push 및 `prod` 정식 릴리스 — `4a29ad3`, `v0.1.10`, release run `35595923825`
 
 ## 검증 메모
 - 매 마일스톤 `swift build`(+해당 시 `swift test`).

@@ -132,6 +132,7 @@ v0.1.7 재검증으로 확인된 직접 오류는 **같은 Chrome 프로세스�
 - `swift test` 성공: 11 suites의 53 tests 통과. 서명 debug 앱 빌드·codesign 검증 성공.
 - notarized v0.1.9 설치본: Chrome 일반·시크릿 실썸네일 표시와 재호출 200ms 캐시 표시를 확인했다. 일반 동적 페이지 `wid=42165` 포커스 후 5개 연속 프레임 해시가 모두 달랐다.
 - stale-while-revalidate 수정본: 두 번째 호출 200ms에는 캐시를 즉시 표시했고, 1.2초 시점에는 iTerm 등 내용이 바뀐 창의 새 프레임으로 교체됨을 확인했다. `swift build`와 서명 debug 앱 codesign 검증이 성공했다.
+- notarized v0.1.10 설치본: Chrome 일반·시크릿 실썸네일을 확인하고 일반 창 `wid=41785`를 선택했다. `didPrivate=false`, `raised=true`였고 WebContents의 Page Down·Page Up 입력과 화면 복귀가 정상 동작했다.
 
 ## 남은 실기 위험
 
